@@ -46,6 +46,9 @@ class Session {
     this.frames = new Map(); // frameId -> video score
     this.activeFrame = null;
     this.needsReconnect = false;
+    // After creating a party, the host's player state becomes the party state
+    // (instead of everyone, host included, jumping to 0:00).
+    this.adoptPending = false;
   }
 
   get me() {
@@ -119,6 +122,7 @@ class Session {
 
   onWelcome(data) {
     const first = !this.info.welcomed;
+    if (first && this.info.mode === "create") this.adoptPending = true;
     Object.assign(this.info, { welcomed: true, userId: data.userId, token: data.token });
     this.persist();
     this.room = data.room;
@@ -141,6 +145,8 @@ class Session {
       case "video":
         room.video = { url: data.url, title: data.title, durationMs: data.durationMs };
         this.sendTop({ op: "ui", kind: "video", data });
+        // We moved the party to a new video: our player's position is the truth.
+        if (data.by === this.me) this.sendActive({ op: "adopt" });
         break;
       case "users": {
         room.users = data.users;
@@ -173,7 +179,7 @@ class Session {
     // Errors before the first welcome are reported by start/join instead.
     if (!this.info.welcomed) return;
     this.sendTop({ op: "ui", kind: "ended", data: { reason: friendly(error) } });
-    endSession(this.tabId, { notify: true });
+    endSession(this.tabId, { message: `Party ended: ${friendly(error)}` });
   }
 
   onStatus(status) {
@@ -199,6 +205,8 @@ class Session {
   }
 
   activation() {
+    const adopt = this.adoptPending;
+    this.adoptPending = false;
     return {
       op: "activate",
       playback: this.room.playback,
@@ -206,6 +214,7 @@ class Session {
       locked: this.room.controlLock,
       isHost: this.isHost,
       me: this.me,
+      adopt,
     };
   }
 
@@ -337,13 +346,13 @@ async function probe(tabId) {
   }
 }
 
-async function endSession(tabId, { notify = true } = {}) {
+async function endSession(tabId, { notify = true, message } = {}) {
   const s = sessions.get(tabId);
   if (!s) return;
   sessions.delete(tabId);
   if (s.socket) s.socket.close();
   await chrome.storage.session.remove(STORE_PREFIX + tabId);
-  if (notify) chrome.tabs.sendMessage(tabId, { op: "left" }).catch(() => {});
+  if (notify) chrome.tabs.sendMessage(tabId, { op: "left", message }).catch(() => {});
   chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
 }
 
@@ -462,6 +471,11 @@ async function handleContent(msg, sender) {
       return {};
     case "frame-gone":
       if (s) s.report(frameId, 0);
+      return {};
+    case "has-video":
+      return { hasVideo: !!s && [...s.frames.values()].some((score) => score > 0) };
+    case "local-notice":
+      if (s) s.sendTop({ op: "ui", kind: "local", data: { kind: msg.kind } });
       return {};
   }
 
