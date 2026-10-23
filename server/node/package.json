@@ -1,0 +1,17 @@
+{
+  "name": "openparty-server",
+  "private": true,
+  "type": "module",
+  "description": "Self-hostable OpenParty sync server",
+  "license": "MIT",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}
