@@ -5,8 +5,10 @@
 //
 //   node tools/browser-e2e.mjs --chromium /path/to/Chromium --video clip.webm [--workdir dir] [--headful]
 //
-// The video must be seekable and at least ~2 minutes long. One way to make one:
-//   ffmpeg -f lavfi -i "testsrc2=size=320x180:rate=10:duration=180" -c:v libvpx-vp9 -b:v 150k clip.webm
+// The video must be seekable, at least ~2 minutes long and have an audio track
+// (Chromium pauses audio-less videos in background tabs). One way to make one:
+//   ffmpeg -f lavfi -i "testsrc2=size=320x180:rate=10:duration=180" -f lavfi -i anullsrc=r=48000:cl=mono \
+//     -t 180 -c:v libvpx-vp9 -b:v 150k -c:a libopus clip.webm
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -52,7 +54,7 @@ async function startSyncServer(p) {
 
 function startPageServer(p, videoPath) {
   const page = `<!doctype html><html><head><title>OpenParty test video</title></head>
-<body style="margin:0;background:#000"><video src="/clip.webm" muted controls style="width:960px;height:540px"></video></body></html>`;
+<body style="margin:0;background:#000"><video src="/clip.webm" controls style="width:960px;height:540px"></video></body></html>`;
   const size = fs.statSync(videoPath).size;
   const server = http.createServer((req, res) => {
     if (req.url.startsWith("/watch")) {
@@ -153,10 +155,13 @@ async function main() {
   const pageServer = await startPageServer(pagePort, path.resolve(args.video));
   const extPath = prepareExtension(syncUrl);
 
+  // A fresh profile each run: Chromium caches extension service workers.
+  const profile = path.join(work, "profile");
+  fs.rmSync(profile, { recursive: true, force: true });
   const chrome = spawn(
     args.chromium,
     [
-      `--user-data-dir=${path.join(work, "profile")}`,
+      `--user-data-dir=${profile}`,
       `--load-extension=${extPath}`,
       `--disable-extensions-except=${extPath}`,
       `--remote-debugging-port=${debugPort}`,
@@ -174,15 +179,22 @@ async function main() {
   children.push(chrome);
   const cdp = await CDP.connect(debugPort);
 
-  // The extension's service worker.
-  let worker;
-  for (let i = 0; i < 100 && !worker; i++) {
+  // OpenParty's service worker (some Chromium builds run other extensions too).
+  let sw = null;
+  for (let i = 0; i < 100 && !sw; i++) {
     const { targetInfos } = await cdp.send("Target.getTargets");
-    worker = targetInfos.find((t) => t.type === "service_worker" && t.url.endsWith("/background.js"));
-    if (!worker) await sleep(100);
+    for (const t of targetInfos.filter((t) => t.type === "service_worker" && t.url.startsWith("chrome-extension://"))) {
+      const session = await cdp.attach(t.targetId);
+      const name = await cdp.eval(session, "chrome.runtime.getManifest().name").catch(() => null);
+      if (name === "OpenParty") {
+        sw = session;
+        break;
+      }
+    }
+    if (!sw) await sleep(100);
   }
-  if (!worker) throw new Error("extension service worker not found");
-  const sw = await cdp.attach(worker.targetId);
+  if (!sw) throw new Error("OpenParty service worker not found");
+  await cdp.eval(sw, `chrome.storage.local.set({ serverUrl: ${JSON.stringify(syncUrl)}, name: "Tester" })`);
 
   async function openTab() {
     const { targetId } = await cdp.send("Target.createTarget", { url: pageUrl });
