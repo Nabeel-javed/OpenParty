@@ -356,9 +356,11 @@ async function endSession(tabId, { notify = true, message } = {}) {
   chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
 }
 
-async function begin(tabId, info) {
+// Joining works from any tab (even a new tab page); the popup then offers to
+// open the party's video, and the tab is set up once that page loads.
+async function begin(tabId, info, { requireInjection = true } = {}) {
   const injected = await inject(tabId);
-  if (injected.error) return injected;
+  if (injected.error && requireInjection) return injected;
   const session = new Session(tabId, info);
   sessions.set(tabId, session);
   await session.persist();
@@ -423,7 +425,7 @@ async function joinParty(tabId, code) {
     controlLock: false,
     video: null,
   };
-  const result = await begin(tabId, info);
+  const result = await begin(tabId, info, { requireInjection: false });
   if (result.error) return result;
   const tab = await chrome.tabs.get(tabId);
   const video = result.session.room.video;
@@ -524,6 +526,18 @@ async function handleExtensionPage(msg) {
       return { ok: true };
     case "reconnect":
       return reconnectTab(msg.tabId);
+    case "navigate": {
+      if (!sessions.has(msg.tabId)) return { error: "This tab isn't in a party." };
+      let url;
+      try {
+        url = new URL(msg.url);
+      } catch {
+        return { error: "Invalid address." };
+      }
+      if (url.protocol !== "https:" && url.protocol !== "http:") return { error: "Invalid address." };
+      await chrome.tabs.update(msg.tabId, { url: url.href });
+      return { ok: true };
+    }
     case "show-panel": {
       const s = sessions.get(msg.tabId);
       if (s) s.sendTop({ op: "show-panel" });
