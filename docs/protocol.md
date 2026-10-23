@@ -19,7 +19,7 @@ A request with an `id` always gets exactly one `reply` with the same `id`. Frame
 
 | type | data | reply data | notes |
 |---|---|---|---|
-| `hello` | `action: "create" \| "join"`, `user: {name, avatar}`, `video?: {url, title, durationMs}`, `controlLock?: bool`, `userId?`, `token?` | `{partyId, userId, token, room}` | Must be the first message. `create` fails if the party exists; `join` fails if it doesn't. Sending a previous `userId` + `token` resumes that identity (reconnects, page reloads). |
+| `hello` | `action: "create" \| "join"`, `user: {name, avatar}`, `video?: {url, title, durationMs}`, `controlLock?: bool`, `playback?: {state, timeMs}`, `userId?`, `token?` | `{partyId, userId, token, room}` | Must be the first message. `create` fails if the party exists; `join` fails if it doesn't. Sending a previous `userId` + `token` resumes that identity (reconnects, page reloads). `playback` on `create` lets a member re-create a party the server lost (restart) at its last known position; the client does this when a resume fails with `no such party`. |
 | `time` | `{}` | `{now}` | Server clock, for offset estimation. |
 | `state` | `state: "playing" \| "paused"`, `timeMs`, `at` | `{}` | Playback change. Rejected with `locked` if control is locked and the sender is not the host. The server clamps `at` to `[now − 5000, now + 1000]`. |
 | `video` | `url`, `title`, `durationMs` | `{}` | The party moved to another video (next episode). Same lock rule as `state`. |
