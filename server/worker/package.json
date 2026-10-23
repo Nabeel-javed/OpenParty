@@ -1,0 +1,11 @@
+{
+  "name": "openparty-worker",
+  "private": true,
+  "type": "module",
+  "description": "OpenParty sync server on Cloudflare Workers + Durable Objects",
+  "license": "MIT",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}
