@@ -1,0 +1,10 @@
+{
+  "name": "openparty",
+  "private": true,
+  "type": "module",
+  "description": "Free, open-source watch parties for any website with a video player",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}

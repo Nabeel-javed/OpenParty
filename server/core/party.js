@@ -292,7 +292,10 @@ function handleHello(room, conn, data, now, rand, { push, reply, fail }) {
   const isNew = !member;
   if (isNew && Object.keys(room.online).length >= LIMITS.maxMembers) return fail("party full");
   if (isNew) {
-    member = { id: "u_" + randomId(12, rand), token: randomId(24, rand), joinedAt: now };
+    let newId;
+    do newId = "u_" + randomId(12, rand);
+    while (room.members[newId]);
+    member = { id: newId, token: randomId(24, rand), joinedAt: now };
     room.members[member.id] = member;
   }
   member.name = cleanName(data.user && data.user.name);
