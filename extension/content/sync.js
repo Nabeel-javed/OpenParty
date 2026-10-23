@@ -76,10 +76,14 @@
       return !this.locked || this.isHost;
     }
 
+    suspended() {
+      return !!(this.adapter.backgroundSuspended && this.adapter.backgroundSuspended());
+    }
+
     onMediaEvent(type) {
       if (type === "waiting") this.setBuffering(true);
       else if (type === "playing" || type === "canplay" || type === "pause") this.setBuffering(false);
-      if (this.applying > 0 || this.adapter.inAd()) return;
+      if (this.applying > 0 || this.adapter.inAd() || this.suspended()) return;
       if (type === "play" || type === "pause" || type === "seeked" || type === "ended") this.onLocalChange(type);
     }
 
@@ -140,7 +144,7 @@
     }
 
     async apply(reason) {
-      if (this.applying > 0 || this.adapter.inAd()) return;
+      if (this.applying > 0 || this.adapter.inAd() || this.suspended()) return;
       const wantPaused = this.playback.state === "paused";
       const target = this.expectedMs();
       const duration = this.adapter.durationMs();

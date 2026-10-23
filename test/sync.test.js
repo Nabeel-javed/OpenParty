@@ -235,3 +235,17 @@ test("a locked rejection asks for a resync", async (t) => {
   assert.ok(notices.includes("locked"));
   assert.ok(sent.some((m) => m.op === "resync"));
 });
+
+test("pauses forced on a hidden muted tab are neither broadcast nor fought", async (t) => {
+  const player = new FakePlayer({ timeMs: 0, paused: false });
+  const { engine, sent } = makeEngine(player, { playback: { state: "playing", timeMs: 0, at: Date.now() } });
+  t.after(() => engine.stop());
+  player.backgroundSuspended = () => true;
+  player.userPause(); // the browser, not the user
+  await sleep(150);
+  assert.deepEqual(states(sent), []);
+  assert.ok(!player.calls.includes("play"), "does not fight the browser");
+  player.backgroundSuspended = () => false;
+  await sleep(150);
+  assert.ok(!player.isPaused, "resumes once the tab is visible again");
+});

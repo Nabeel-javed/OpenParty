@@ -51,6 +51,13 @@
       return OP.adVisible(this.site.ad);
     }
 
+    // Chromium pauses muted or audio-less videos in hidden tabs by itself.
+    // Those pauses aren't the user's, so they must not pause the party.
+    backgroundSuspended() {
+      if (!document.hidden) return false;
+      return this.video.muted || this.video.webkitAudioDecodedByteCount === 0;
+    }
+
     async play() {
       try {
         await this.video.play();
