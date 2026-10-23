@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OpenParty</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="../icons/icon32.png" width="24" height="24" alt="" />
+      <h1>OpenParty</h1>
+      <span id="badge" class="pill" hidden></span>
+    </header>
+
+    <main>
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <!-- Not in a party -->
+      <section id="start-view" hidden>
+        <p id="video-hint" class="hint"></p>
+        <label class="check"><input type="checkbox" id="control-lock" /> Only I can play, pause and seek</label>
+        <button id="start" class="primary">Start a party</button>
+
+        <div class="divider"><span>or join one</span></div>
+        <form id="join-form">
+          <input id="join-code" type="text" placeholder="Paste an invite link or code" autocomplete="off" spellcheck="false" />
+          <button id="join" type="submit">Join</button>
+        </form>
+      </section>
+
+      <!-- In a party -->
+      <section id="party-view" hidden>
+        <p class="hint">Party code <code id="party-code"></code> · <span id="party-status"></span></p>
+        <div class="row">
+          <input id="invite-url" type="text" readonly />
+          <button id="copy">Copy</button>
+        </div>
+        <p id="party-video" class="hint"></p>
+        <button id="go-video" hidden>Go to the party's video</button>
+        <button id="reconnect" hidden>Reconnect this page</button>
+        <ul id="members"></ul>
+        <label class="check" id="lock-row" hidden><input type="checkbox" id="lock" /> Only I (host) control playback</label>
+        <div class="row">
+          <button id="show-panel">Show chat</button>
+          <button id="leave" class="danger">Leave party</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <button id="avatar" title="Change avatar">🍿</button>
+      <input id="name" type="text" maxlength="24" placeholder="Your name" aria-label="Your name" />
+      <a href="#" id="settings">Settings</a>
+    </footer>
+
+    <script src="../shared/util.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
