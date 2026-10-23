@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OpenParty settings</title>
+    <link rel="stylesheet" href="../popup/popup.css" />
+    <style>
+      body { width: auto; max-width: 560px; margin: 32px auto; padding: 0 16px; }
+      section { gap: 12px; margin-bottom: 28px; }
+      h2 { font-size: 14px; margin: 0; }
+      p { margin: 0; }
+      .ok { color: #1a9e57; }
+      .bad { color: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="../icons/icon32.png" width="24" height="24" alt="" />
+      <h1>OpenParty settings</h1>
+    </header>
+    <main>
+      <section>
+        <h2>You</h2>
+        <div class="row">
+          <button id="avatar" title="Change avatar">🍿</button>
+          <input id="name" type="text" maxlength="24" placeholder="Your name" />
+        </div>
+      </section>
+
+      <section>
+        <h2>Sync server</h2>
+        <p class="hint">
+          Parties are relayed through this server. Use the default, or run your own (see the README). Invite links
+          carry the server, so friends join the right one automatically.
+        </p>
+        <div class="row">
+          <input id="server" type="text" spellcheck="false" />
+          <button id="test">Test</button>
+          <button id="save-server">Save</button>
+        </div>
+        <p id="server-result" class="hint"></p>
+        <button id="reset-server">Use the default server</button>
+      </section>
+
+      <section>
+        <h2>Site access</h2>
+        <p class="hint">
+          OpenParty asks for access to a site the first time you start or join a party there. It never runs on a
+          site unless you're in a party.
+        </p>
+        <p id="sites" class="hint"></p>
+        <div class="row">
+          <button id="all-sites">Allow on all sites</button>
+          <button id="clear-sites" class="danger">Remove all site access</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Privacy</h2>
+        <p class="hint">
+          OpenParty has no accounts, ads, analytics or tracking. The sync server only sees what a party needs (video
+          link and title, playback position, names, chat) and forgets a party 10 minutes after everyone leaves.
+        </p>
+      </section>
+    </main>
+    <script src="../shared/util.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
