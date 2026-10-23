@@ -49,7 +49,13 @@
     }
 
     async onOpen() {
-      const reply = await this.request("hello", await this.hooks.hello());
+      let reply = await this.request("hello", await this.hooks.hello({ recreate: false }));
+      // The server lost the party (restart): the first member back re-creates it.
+      if (reply.error === "no such party" && this.welcomed) {
+        reply = await this.request("hello", await this.hooks.hello({ recreate: true }));
+        // Someone else re-created it first: join theirs.
+        if (reply.error === "party exists") reply = await this.request("hello", await this.hooks.hello({ recreate: false }));
+      }
       if (reply.error) {
         this.close();
         this.hooks.fatal(reply.error);

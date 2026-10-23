@@ -277,7 +277,10 @@ function handleHello(room, conn, data, now, rand, { push, reply, fail }) {
     if (!video) return fail("bad video");
     room.video = video;
     room.controlLock = !!data.controlLock;
-    room.playback = { state: "paused", timeMs: 0, at: now };
+    // A member re-creating a party lost in a server restart passes the last known position.
+    const p = data.playback;
+    const resumed = p && (p.state === "playing" || p.state === "paused") && finiteIn(p.timeMs, 0, LIMITS.maxDurationMs);
+    room.playback = resumed ? { state: p.state, timeMs: Math.round(p.timeMs), at: now } : { state: "paused", timeMs: 0, at: now };
   } else if (action === "join") {
     if (!room.hostId) return fail("no such party");
   } else {

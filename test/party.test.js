@@ -197,3 +197,15 @@ test("party full", () => {
   for (let i = 1; i < LIMITS.maxMembers; i++) hello(room, now, "join", { name: "u" + i });
   assert.equal(hello(room, now, "join").reply.error, "party full");
 });
+
+test("create can resume a known playback position", () => {
+  const { room, now } = setup();
+  hello(room, now, "create", { video: VIDEO, playback: { state: "playing", timeMs: 61_000.7 } });
+  assert.deepEqual(room.playback, { state: "playing", timeMs: 61_001, at: now });
+});
+
+test("create ignores a malformed playback position", () => {
+  const { room, now } = setup();
+  hello(room, now, "create", { video: VIDEO, playback: { state: "zoom", timeMs: -5 } });
+  assert.deepEqual(room.playback, { state: "paused", timeMs: 0, at: now });
+});

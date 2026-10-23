@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { randomId } from "../server/core/party.js";
 import { runScenario } from "./helpers/client.js";
 
 const WORKER_DIR = fileURLToPath(new URL("../server/worker/", import.meta.url));
 const WRANGLER = `${WORKER_DIR}node_modules/.bin/wrangler`;
 const PORT = 40000 + Math.floor(Math.random() * 20000);
+const PARTY = randomId(10);
 const BASE = `http://127.0.0.1:${PORT}`;
 
 test("worker end to end (wrangler dev)", { skip: !existsSync(WRANGLER) && "run npm install in server/worker" }, async (t) => {
@@ -39,7 +41,7 @@ test("worker end to end (wrangler dev)", { skip: !existsSync(WRANGLER) && "run n
   });
 
   assert.equal(await fetch(`${BASE}/healthz`).then((r) => r.text()), "ok");
-  await runScenario(t, BASE, assert, "w3m9q2x7pa");
+  await runScenario(t, BASE, assert, PARTY);
 
   // Keepalive is answered by the hibernation auto-response.
   const ws = new WebSocket(`${BASE.replace("http", "ws")}/ws/w3m9q2x7pa`);
