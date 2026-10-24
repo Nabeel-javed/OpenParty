@@ -29,11 +29,9 @@ async function go() {
 }
 
 $("join").addEventListener("click", () => {
-  // Ask for the site first (needs this click); join either way: without
-  // access the popup's "Reconnect" can still attach to the page later.
-  const pattern = OPU.originPattern(invite.video.url);
-  const access = pattern ? chrome.permissions.request({ origins: [pattern] }).catch(() => false) : Promise.resolve(false);
-  access.then(go);
+  // The one-time site-access prompt (needs this click). Join either way:
+  // without access the popup's "Reconnect" can still attach to the page.
+  OPU.requestAllSites().then(go);
 });
 
 $("avatar").addEventListener("click", async () => {
@@ -58,7 +56,9 @@ $("avatar").addEventListener("click", async () => {
   $("site").textContent = `on ${site}. Make sure you can watch it there (signed in, subscription if needed).`;
   const pattern = OPU.originPattern(invite.video.url);
   const granted = pattern ? await chrome.permissions.contains({ origins: [pattern] }) : false;
-  if (granted) return go(); // already allowed on this site: straight in, like a normal link
-  $("status").textContent = `OpenParty will ask to access ${site} so it can sync the video. It only runs there while you're in a party.`;
+  if (granted) return go(); // access already given: straight in, like a normal link
+  $("status").textContent =
+    "First time only: OpenParty will ask for access to websites so it can sync videos. " +
+    "It only runs on a page while that tab is in a party.";
   $("join").focus();
 })();
