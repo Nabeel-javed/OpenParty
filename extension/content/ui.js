@@ -126,6 +126,21 @@
     );
   }
 
+  const PANEL_EVENTS = ["keydown", "keyup", "keypress", "pointerdown", "pointerup", "mousedown", "mouseup", "click",
+    "touchstart", "touchend", "wheel", "focusin", "focusout"];
+
+  // Focus moving from the page into the panel also fires focusout on the page's
+  // element, and focus traps may listen in the capture phase: hide both from the
+  // page before its own listeners run.
+  let focusGuarded = false;
+  function guardFocus(host) {
+    if (focusGuarded) return;
+    focusGuarded = true;
+    const intoPanel = (node) => !!node && node === host();
+    addEventListener("focusout", (e) => intoPanel(e.relatedTarget) && e.stopImmediatePropagation(), true);
+    addEventListener("focusin", (e) => intoPanel(e.target) && e.stopImmediatePropagation(), true);
+  }
+
   class Panel {
     constructor() {
       this.host = null;
@@ -149,8 +164,12 @@
       this.$ = (sel) => shadow.querySelector(sel);
       this.root = this.$(".root");
 
-      // Keep keystrokes in the chat box away from site shortcuts (space = pause etc.).
-      for (const type of ["keydown", "keyup", "keypress"]) this.host.addEventListener(type, (e) => e.stopPropagation());
+      // What happens in the panel stays out of the page: site shortcuts (space =
+      // pause), click-outside handlers, and focus traps of modal players that pull
+      // focus straight back out of the chat box. The page sees these events
+      // retargeted to the host element.
+      for (const type of PANEL_EVENTS) this.host.addEventListener(type, (e) => e.stopPropagation());
+      guardFocus(() => this.host);
 
       this.$(".fab").addEventListener("click", () => this.open(this.$(".panel").hidden));
       this.$(".actions").addEventListener("click", (e) => this.onAction(e.target.closest("button")));
@@ -162,6 +181,8 @@
         this.$(".reactions").append(b);
       }
       const input = this.$("textarea");
+      // A page may cancel the mousedown that would focus the box; focus it ourselves.
+      input.addEventListener("click", () => shadow.activeElement !== input && input.focus());
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
           e.preventDefault();
