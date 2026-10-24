@@ -86,45 +86,48 @@ function renderParty() {
 
 // ---- actions ----
 
+// Each action is sent to the service worker *before* the permission prompt:
+// on some systems the prompt closes this popup, which would otherwise stop the
+// action from ever being sent. The worker sets the page up again once access
+// is granted (permissions.onAdded).
+
 $("start").addEventListener("click", () => {
-  const access = requestAccess([tab.url, ...((probe && probe.iframeOrigins) || [])]);
+  const pending = bg("start", { controlLock: $("control-lock").checked });
+  requestAccess([tab.url, ...((probe && probe.iframeOrigins) || [])]);
   run(async () => {
-    await access;
-    const res = await bg("start", { controlLock: $("control-lock").checked });
+    const res = await pending;
     if (res.error) throw res.error;
     await render();
-    bg("show-panel");
   });
 });
 
 $("join-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  const access = requestAccess([tab.url || ""]);
+  const pending = bg("join", { code: $("join-code").value });
+  requestAccess([tab.url || ""]);
   run(async () => {
-    await access;
-    const res = await bg("join", { code: $("join-code").value });
+    const res = await pending;
     if (res.error) throw res.error;
     await render();
-    if (res.sameVideo) bg("show-panel");
   });
 });
 
 $("go-video").addEventListener("click", () => {
   const url = status.video.url;
-  const access = requestAccess([url]);
+  const pending = bg("navigate", { url });
+  requestAccess([url]);
   run(async () => {
-    await access;
-    const res = await bg("navigate", { url });
+    const res = await pending;
     if (res.error) throw res.error;
     window.close();
   });
 });
 
 $("reconnect").addEventListener("click", () => {
-  const access = requestAccess([tab.url || ""]);
+  const pending = bg("reconnect");
+  requestAccess([tab.url || ""]);
   run(async () => {
-    await access;
-    const res = await bg("reconnect");
+    const res = await pending;
     if (res.error) throw res.error;
     await render();
   });
