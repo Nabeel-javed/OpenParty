@@ -5,6 +5,8 @@
 //
 //   node tools/browser-e2e.mjs --chromium /path/to/Chromium --video clip.webm [--workdir dir] [--headful] [--screenshot out.png]
 //
+// With --server https://… the test uses that deployed sync server instead of starting a local one.
+//
 // The video must be seekable, at least ~2 minutes long and have an audio track
 // (Chromium pauses audio-less videos in background tabs). One way to make one:
 //   ffmpeg -f lavfi -i "testsrc2=size=320x180:rate=10:duration=180" -f lavfi -i anullsrc=r=48000:cl=mono \
@@ -25,7 +27,7 @@ const args = Object.fromEntries(
   }, []),
 );
 if (!args.chromium || !args.video) {
-  console.error("usage: node tools/browser-e2e.mjs --chromium <path> --video <clip.webm> [--workdir dir] [--headful] [--screenshot out.png]");
+  console.error("usage: node tools/browser-e2e.mjs --chromium <path> --video <clip.webm> [--server url] [--workdir dir] [--headful] [--screenshot out.png]");
   process.exit(2);
 }
 
@@ -169,13 +171,14 @@ async function main() {
   const syncPort = port();
   const pagePort = port();
   const debugPort = port();
-  const syncUrl = `http://127.0.0.1:${syncPort}`;
+  const syncUrl = args.server ? String(args.server).replace(/\/+$/, "") : `http://127.0.0.1:${syncPort}`;
+  const syncHost = new URL(syncUrl).host;
   const framePort = port(); // a second origin for the embedded-player scenario
   const pageUrl = `http://127.0.0.1:${pagePort}/watch.html`;
   const embedUrl = `http://127.0.0.1:${pagePort}/embed.html`;
   const frameOrigin = `http://127.0.0.1:${framePort}`;
 
-  await startSyncServer(syncPort);
+  if (!args.server) await startSyncServer(syncPort);
   const pageServer = await startPageServer(pagePort, path.resolve(args.video), `${frameOrigin}/watch.html`);
   const frameServer = await startPageServer(framePort, path.resolve(args.video));
   const extPath = prepareExtension(syncUrl);
@@ -250,7 +253,7 @@ async function main() {
   check("party panel is injected", await cdp.eval(host.session, "!!document.querySelector('openparty-panel')"));
 
   const guest = await openTab();
-  const joined = await cdp.eval(sw, `joinParty(${guest.tabId}, ${JSON.stringify(`${started.partyId}@127.0.0.1:${syncPort}`)})`);
+  const joined = await cdp.eval(sw, `joinParty(${guest.tabId}, ${JSON.stringify(`${started.partyId}@${syncHost}`)})`);
   check("guest joins with the invite code", !!joined.ok, joined.error || "");
   await sleep(4000);
   h = await pos(host);
@@ -313,7 +316,7 @@ async function main() {
   const started2 = await cdp.eval(sw, `startParty(${host2.tabId}, { controlLock: false })`);
   check("embedded player: host starts a party", !!started2.ok, started2.error || "");
   const guest2 = await openTab(embedUrl, frameOrigin);
-  const joined2 = await cdp.eval(sw, `joinParty(${guest2.tabId}, ${JSON.stringify(`${started2.partyId}@127.0.0.1:${syncPort}`)})`);
+  const joined2 = await cdp.eval(sw, `joinParty(${guest2.tabId}, ${JSON.stringify(`${started2.partyId}@${syncHost}`)})`);
   check("embedded player: guest joins", !!joined2.ok, joined2.error || "");
   await sleep(4000);
   h = await pos(host2);
