@@ -362,6 +362,26 @@ async function main() {
   await sleep(800);
   const last5 = await cdp.eval(sw, `sessions.get(${host5.tabId}).room.messages.at(-1)?.text`);
   check("single-page site: guest can type in the chat despite the focus trap", last5 === "typing past the focus trap", String(last5));
+
+  // Emoji picker: open it, pick one, keep typing, send.
+  const clickAt = async (selector) => {
+    const r = await cdp.eval(guest5.session, `(() => { const r = OP.ui.$(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`, panelCtx.id);
+    for (const type of ["mousePressed", "mouseReleased"]) {
+      await cdp.send("Input.dispatchMouseEvent", { type, x: r.x, y: r.y, button: "left", clickCount: 1 }, guest5.session);
+    }
+    await sleep(200);
+  };
+  await clickAt(".emoji-toggle");
+  const pickerOpen = await cdp.eval(guest5.session, `!OP.ui.$(".picker").hidden`, panelCtx.id);
+  await clickAt('.picker button[data-emoji="😂"]');
+  await cdp.send("Input.insertText", { text: " lol" }, guest5.session);
+  for (const type of ["keyDown", "keyUp"]) {
+    await cdp.send("Input.dispatchKeyEvent", { type, key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: type === "keyDown" ? "\r" : undefined }, guest5.session);
+  }
+  await sleep(800);
+  const emoji5 = await cdp.eval(sw, `sessions.get(${host5.tabId}).room.messages.at(-1)?.text`);
+  const pickerClosed = await cdp.eval(guest5.session, `OP.ui.$(".picker").hidden`, panelCtx.id);
+  check("emoji picker: picked emoji goes into the message", pickerOpen && emoji5 === "😂 lol" && pickerClosed, `${emoji5}, closed after send: ${pickerClosed}`);
   await cdp.eval(sw, `endSession(${host5.tabId})`);
   await cdp.eval(sw, `endSession(${guest5.tabId})`);
 
