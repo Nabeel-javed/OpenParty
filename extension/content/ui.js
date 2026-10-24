@@ -229,6 +229,7 @@
         for (const m of room.messages || []) this.addChat(m, true);
         if (first) {
           this.system(this.isHost ? "Party started. Share the invite link (🔗) with friends." : "You joined the party.");
+          if (!this.isHost && room.video && OPU.videoKey(location.href) !== OPU.videoKey(room.video.url)) this.notHere(room.video);
           this.open(true);
         }
       }
@@ -389,6 +390,15 @@
       if (prev.state !== d.state) this.system(d.state === "paused" ? `${who} paused at ${OP.formatTime(d.timeMs)}.` : `${who} pressed play.`);
       else this.system(`${who} jumped to ${OP.formatTime(d.timeMs)}.`);
       this.room.playback = d;
+    }
+
+    // A guest whose page isn't the party's video (some sites redirect, or keep
+    // the video out of the address): they can still find it themselves.
+    notHere(video) {
+      const go = document.createElement("button");
+      go.textContent = "Open it";
+      go.addEventListener("click", () => location.assign(video.url));
+      this.system(`The party is watching “${video.title || video.url}”. Open it in this tab and you'll sync as soon as it plays.`, go);
     }
 
     videoChanged(d) {
