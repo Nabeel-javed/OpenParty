@@ -56,6 +56,15 @@
     textarea:focus { border-color: #7c5cff; }
     form button { padding: 0 12px; border-radius: 10px; background: #5b4bff; font-weight: 650; }
     form button:disabled, textarea:disabled { opacity: .5; }
+    form .emoji-toggle { padding: 0 4px; background: none; font-size: 20px; font-weight: 400; border-radius: 8px; }
+    form .emoji-toggle:hover, form .emoji-toggle.on { background: #ffffff14; }
+    .picker { position: absolute; left: 8px; right: 8px; bottom: 56px; max-height: 220px; overflow-y: auto;
+      padding: 6px; border-radius: 12px; background: #1d1d27; border: 1px solid #ffffff1f; box-shadow: 0 8px 24px #0009;
+      scrollbar-width: thin; }
+    .picker h3 { margin: 4px 4px 2px; font-size: 11px; font-weight: 600; color: #a0a0b2; }
+    .picker .grid { display: grid; grid-template-columns: repeat(8, 1fr); }
+    .picker .grid button { height: 32px; border-radius: 8px; font-size: 20px; line-height: 1; }
+    .picker .grid button:hover { background: #ffffff14; }
     .toast { position: absolute; left: 12px; right: 12px; bottom: 60px; padding: 8px 10px; border-radius: 10px;
       background: #2b2b38; border: 1px solid #ffffff1f; font-size: 12px; text-align: center; }
     .float { position: fixed; bottom: 90px; font-size: 32px; pointer-events: none;
@@ -65,6 +74,14 @@
     .standalone { position: fixed; right: 16px; bottom: 16px; padding: 10px 14px; border-radius: 12px;
       background: #2b2b38; box-shadow: 0 6px 20px #0008; }
   `;
+
+  // The chat box's emoji picker.
+  const EMOJI_GROUPS = [
+    ["Smileys", "😀 😃 😄 😁 😆 😅 🤣 😂 🙂 😉 😊 😇 🥰 😍 🤩 😘 😋 😜 🤪 😎 🤓 🥳 😏 🙄 😬 😴 🤤 🤔 🤭 🤫 🤗 😳 🥺 😢 😭 😤 😠 😡 🤯 😱 😨 😰 🥶 🥵 🤢 🤮 😵 💀 👻 🤡 💩 🙈"],
+    ["Gestures", "👍 👎 👏 🙌 👋 🤝 🙏 ✌️ 🤞 🤟 🤘 👌 👀 💪 🫡 🤷"],
+    ["Hearts", "❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 💕 💖 💯"],
+    ["Fun", "🍿 🎬 📺 🎉 🎊 🔥 ✨ ⭐ 💥 🥤 🍕 🍔 🍩 🍫 🎮 🏆"],
+  ].map(([name, list]) => [name, list.split(" ")]);
 
   // Built with DOM calls, not innerHTML: some sites enforce Trusted Types.
   function h(tag, props, ...children) {
@@ -109,8 +126,17 @@
         h("div", { class: "typing" }),
         h("div", { class: "reactions" }),
         h(
+          "div",
+          { class: "picker", hidden: true, role: "dialog", "aria-label": "Emoji" },
+          ...EMOJI_GROUPS.flatMap(([name, list]) => [
+            h("h3", {}, name),
+            h("div", { class: "grid" }, ...list.map((e) => h("button", { type: "button", "data-emoji": e, title: e, "aria-label": e }, e))),
+          ]),
+        ),
+        h(
           "form",
           {},
+          h("button", { type: "button", class: "emoji-toggle", title: "Emoji", "aria-label": "Insert emoji" }, "😊"),
           h("textarea", { maxlength: "500", placeholder: "Say something…", "aria-label": "Chat message" }),
           h("button", { type: "submit" }, "Send"),
         ),
@@ -190,6 +216,34 @@
         }
       });
       input.addEventListener("input", () => this.onTyping());
+
+      // Emoji picker: picks go in at the cursor; it stays open for more until
+      // Escape, a click elsewhere, or sending.
+      const picker = this.$(".picker");
+      const toggle = this.$(".emoji-toggle");
+      this.showPicker = (on) => {
+        picker.hidden = !on;
+        toggle.classList.toggle("on", on);
+      };
+      toggle.addEventListener("click", () => {
+        this.showPicker(picker.hidden);
+        input.focus();
+      });
+      picker.addEventListener("click", (e) => {
+        const button = e.target.closest("button[data-emoji]");
+        if (button) this.insertText(button.dataset.emoji);
+      });
+      shadow.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !picker.hidden) {
+          this.showPicker(false);
+          input.focus();
+        }
+      });
+      shadow.addEventListener("click", (e) => {
+        if (!picker.hidden && !picker.contains(e.target) && !toggle.contains(e.target)) this.showPicker(false);
+      });
+      // Clicks on the page itself (they reach the document retargeted to the host when they're ours).
+      document.addEventListener("click", (e) => this.host && e.target !== this.host && this.showPicker(false), true);
       this.$("form").addEventListener("submit", (e) => {
         e.preventDefault();
         this.submit();
@@ -221,6 +275,7 @@
 
     open(show) {
       this.$(".panel").hidden = !show;
+      if (!show) this.showPicker(false);
       if (show) {
         this.unread = 0;
         this.$(".fab-dot").hidden = true;
@@ -495,6 +550,14 @@
       }
     }
 
+    insertText(text) {
+      const input = this.$("textarea");
+      if (input.value.length + text.length > Number(input.maxLength)) return;
+      input.focus();
+      input.setRangeText(text, input.selectionStart, input.selectionEnd, "end");
+      this.onTyping();
+    }
+
     async copyInvite() {
       const url = this.room.inviteUrl;
       let copied = false;
@@ -518,6 +581,7 @@
       const text = input.value.trim();
       if (!text) return;
       input.value = "";
+      this.showPicker(false);
       this.setTyping(false);
       OP.send({ op: "chat", text }).then((res) => res && res.error && this.toast(res.error));
     }
