@@ -73,7 +73,9 @@ $("test").addEventListener("click", async () => {
 $("save-server").addEventListener("click", async () => {
   const url = OPU.normalizeServerUrl($("server").value);
   if (!url) return result("That isn't a valid http(s) address.", false);
-  await chrome.storage.local.set({ serverUrl: url });
+  // Saving the default stores nothing, so a later change of default still applies.
+  if (url === OPU.DEFAULT_SERVER_URL) await chrome.storage.local.remove("serverUrl");
+  else await chrome.storage.local.set({ serverUrl: url });
   $("server").value = url;
   result("Saved. New parties will use this server.", true);
 });
