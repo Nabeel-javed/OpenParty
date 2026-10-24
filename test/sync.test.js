@@ -249,3 +249,18 @@ test("pauses forced on a hidden muted tab are neither broadcast nor fought", asy
   await sleep(150);
   assert.ok(!player.isPaused, "resumes once the tab is visible again");
 });
+
+test("after an ad the player catches up to the party instead of starting over", async (t) => {
+  const player = new FakePlayer({ timeMs: 0, paused: false });
+  player.ad = true; // joined during a pre-roll ad
+  const { engine } = makeEngine(player, { playback: { state: "playing", timeMs: 83_000, at: Date.now() } });
+  t.after(() => engine.stop());
+  engine.apply("remote");
+  await sleep(150);
+  assert.ok(!player.calls.includes("seek"), "leaves the ad alone");
+  player.ad = false; // ad over: the site starts the video from 0:00
+  player.base = 0;
+  player.since = Date.now();
+  await sleep(200);
+  assert.ok(Math.abs(player.timeMs() - engine.expectedMs()) < 300, `at ${player.timeMs()} vs party ${engine.expectedMs()}`);
+});
