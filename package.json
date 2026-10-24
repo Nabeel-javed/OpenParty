@@ -5,6 +5,7 @@
   "description": "Free, open-source watch parties for any website with a video player",
   "license": "MIT",
   "scripts": {
-    "test": "node --test \"test/*.test.js\""
+    "test": "node --test \"test/*.test.js\"",
+    "package": "node tools/package.mjs"
   }
 }
