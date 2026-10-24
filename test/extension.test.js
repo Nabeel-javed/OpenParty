@@ -18,7 +18,13 @@ test("manifest references existing files and asks for minimal permissions", () =
   for (const f of files) assert.ok(existsSync(ext(f)), `missing ${f}`);
   assert.deepEqual([...manifest.permissions].sort(), ["activeTab", "scripting", "storage"]);
   assert.equal(manifest.host_permissions, undefined, "site access must stay optional");
-  assert.equal(manifest.content_scripts, undefined, "nothing runs outside a party");
+  // Nothing runs outside a party, except the invite hand-off on OpenParty's own invite pages.
+  for (const cs of manifest.content_scripts || []) {
+    assert.deepEqual(cs.js, ["invite/invite.js"]);
+    for (const m of cs.matches) assert.match(m, /^https?:\/\/[^/*]+\/j\/\*$/, `${m} must only match invite pages`);
+    files.push(...cs.js);
+  }
+  for (const f of files) assert.ok(existsSync(ext(f)), `missing ${f}`);
   assert.equal(manifest.web_accessible_resources, undefined, "sites must not be able to detect the extension");
 });
 

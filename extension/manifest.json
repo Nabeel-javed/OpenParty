@@ -18,6 +18,13 @@
       "48": "icons/icon48.png"
     }
   },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/j/*", "http://127.0.0.1/j/*"],
+      "js": ["invite/invite.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
