@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Render the OpenParty icon (rounded square, play triangle, two chat dots)
-to extension/icons/icon{16,32,48,128}.png using only the standard library."""
+to extension/icons/icon{16,32,48,128}.png, and the Chrome Web Store icon
+(96 px artwork with 16 px transparent padding) to store/icon128.png,
+using only the standard library."""
 
 import os
 import struct
 import zlib
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "extension", "icons")
+STORE = os.path.join(os.path.dirname(__file__), "..", "store")
 TOP = (124, 92, 255)  # gradient start
 BOTTOM = (79, 56, 230)  # gradient end
 SS = 4  # supersampling factor
@@ -43,7 +46,8 @@ def pixel(x, y):
     return tuple(round(TOP[i] + (BOTTOM[i] - TOP[i]) * t) for i in range(3)) + (255,)
 
 
-def render(size):
+def render(size, pad=0):
+    inner = size - 2 * pad
     rows = []
     for py in range(size):
         row = bytearray([0])  # filter type: none
@@ -51,7 +55,7 @@ def render(size):
             acc = [0, 0, 0, 0]
             for sy in range(SS):
                 for sx in range(SS):
-                    r, g, b, a = pixel((px + (sx + 0.5) / SS) / size, (py + (sy + 0.5) / SS) / size)
+                    r, g, b, a = pixel((px - pad + (sx + 0.5) / SS) / inner, (py - pad + (sy + 0.5) / SS) / inner)
                     acc[0] += r * a
                     acc[1] += g * a
                     acc[2] += b * a
@@ -78,3 +82,7 @@ if __name__ == "__main__":
         with open(os.path.join(OUT, f"icon{size}.png"), "wb") as f:
             f.write(render(size))
         print(f"wrote icon{size}.png")
+    os.makedirs(STORE, exist_ok=True)
+    with open(os.path.join(STORE, "icon128.png"), "wb") as f:
+        f.write(render(128, pad=16))
+    print("wrote store/icon128.png")
