@@ -100,6 +100,15 @@
     }
   }
 
+  // Site access is asked for once, for all sites, the first time a party is
+  // started or joined (the prompt only appears if it isn't granted yet).
+  // Extension pages only; must run synchronously inside a click handler.
+  const ALL_SITES = ["<all_urls>"];
+
+  function requestAllSites() {
+    return chrome.permissions.request({ origins: ALL_SITES }).catch(() => false);
+  }
+
   async function getSettings() {
     const stored = await chrome.storage.local.get(Object.keys(DEFAULT_SETTINGS));
     const settings = { ...DEFAULT_SETTINGS, ...stored };
@@ -124,6 +133,8 @@
     inviteUrl,
     videoKey,
     originPattern,
+    ALL_SITES,
+    requestAllSites,
     getSettings,
   };
 })();

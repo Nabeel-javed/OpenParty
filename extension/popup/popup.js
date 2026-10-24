@@ -11,14 +11,6 @@ function showError(text) {
   $("error").hidden = !text;
 }
 
-// Must be called synchronously from a click handler: Chrome only shows the
-// permission prompt during a user gesture. Resolves to whether access was granted.
-function requestAccess(urls) {
-  const origins = [...new Set(urls.map((u) => OPU.originPattern(u)).filter(Boolean))];
-  if (origins.length === 0) return Promise.resolve(false);
-  return chrome.permissions.request({ origins }).catch(() => false);
-}
-
 // Run an action with the popup's buttons disabled, showing any error.
 async function run(action) {
   const buttons = [...document.querySelectorAll("button")];
@@ -97,14 +89,14 @@ function renderParty() {
 
 // ---- actions ----
 
-// Each action is sent to the service worker *before* the permission prompt:
-// on some systems the prompt closes this popup, which would otherwise stop the
-// action from ever being sent. The worker sets the page up again once access
-// is granted (permissions.onAdded).
+// Each action is sent to the service worker *before* the one-time site-access
+// prompt: on some systems the prompt closes this popup, which would otherwise
+// stop the action from ever being sent. The worker sets the page up again once
+// access is granted (permissions.onAdded).
 
 $("start").addEventListener("click", () => {
   const pending = bg("start", { controlLock: $("control-lock").checked });
-  requestAccess([tab.url, ...((probe && probe.iframeOrigins) || [])]);
+  OPU.requestAllSites();
   run(async () => {
     const res = await pending;
     if (res.error) throw res.error;
@@ -115,7 +107,7 @@ $("start").addEventListener("click", () => {
 $("join-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const pending = bg("join", { code: $("join-code").value });
-  requestAccess([tab.url || ""]);
+  OPU.requestAllSites();
   run(async () => {
     const res = await pending;
     if (res.error) throw res.error;
@@ -126,7 +118,7 @@ $("join-form").addEventListener("submit", (e) => {
 $("go-video").addEventListener("click", () => {
   const url = status.video.url;
   const pending = bg("navigate", { url });
-  requestAccess([url]);
+  OPU.requestAllSites();
   run(async () => {
     const res = await pending;
     if (res.error) throw res.error;
@@ -136,7 +128,7 @@ $("go-video").addEventListener("click", () => {
 
 $("reconnect").addEventListener("click", () => {
   const pending = bg("reconnect");
-  requestAccess([tab.url || ""]);
+  OPU.requestAllSites();
   run(async () => {
     const res = await pending;
     if (res.error) throw res.error;
