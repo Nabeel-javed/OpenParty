@@ -1,5 +1,7 @@
 # Running an OpenParty server
 
+OpenParty works out of the box with the free public server (`https://openparty.openparty-worker.workers.dev`, deployed from `server/worker`). Run your own if you want full control over where party data goes.
+
 The server is a small relay: it keeps each party's playback state, members and recent chat, and forwards changes between members. Two interchangeable implementations share the same core (`server/core/`) and speak the same [protocol](protocol.md).
 
 | | Node (`server/node`) | Cloudflare (`server/worker`) |

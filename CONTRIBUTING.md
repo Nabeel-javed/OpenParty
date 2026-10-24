@@ -36,7 +36,7 @@ npm test                                   # all tests (Node 22+)
 cd server/node && npm install && npm start # local server on :8787
 ```
 
-Load `extension/` unpacked in `chrome://extensions`. Its default server is `http://localhost:8787` until a public server is configured.
+Load `extension/` unpacked in `chrome://extensions`. It uses the public server by default; to use your local one, enter `http://localhost:8787` in OpenParty's settings → *Sync server*.
 
 To test with two "people" on one machine, use two browser profiles (or one normal and one guest window) with the extension loaded in both.
 
