@@ -22,6 +22,7 @@ const PAGE_SCRIPTS = [{ host: /(^|\.)netflix\.com$/, file: "page/netflix.js" }];
 const CONNECT_TIMEOUT_MS = 10_000;
 const FRAME_SWITCH_MARGIN = 1.2; // a new frame must score 20% higher to take over
 const STORE_PREFIX = "party:";
+const INVITE_PREFIX = "invite:";
 
 const ERRORS = {
   "no such party": "That party doesn't exist or has ended.",
@@ -404,7 +405,7 @@ async function startParty(tabId, { controlLock }) {
   return { error: "Couldn't create a party. Try again." };
 }
 
-async function joinParty(tabId, code) {
+async function joinParty(tabId, code, explicitServerUrl) {
   const invite = OPU.parseInvite(code);
   if (!invite) return { error: "That doesn't look like an OpenParty link or code." };
   const existing = sessions.get(tabId);
@@ -413,7 +414,7 @@ async function joinParty(tabId, code) {
     await endSession(tabId);
   }
   const settings = await OPU.getSettings();
-  const serverUrl = OPU.normalizeServerUrl(OPU.serverForInvite(invite, settings));
+  const serverUrl = OPU.normalizeServerUrl(explicitServerUrl || OPU.serverForInvite(invite, settings));
   if (!serverUrl) return { error: "That invite names an invalid server." };
   const info = {
     partyId: invite.partyId,
@@ -430,6 +431,30 @@ async function joinParty(tabId, code) {
   const tab = await chrome.tabs.get(tabId);
   const video = result.session.room.video;
   return { ok: true, video, sameVideo: OPU.videoKey(tab.url || "") === OPU.videoKey(video.url) };
+}
+
+// An invite page (<server>/j/<code>) was opened: remember the invite and show
+// OpenParty's join page in that tab, which asks for site access if needed and
+// then joins and opens the video.
+async function openInvite(tabId, msg) {
+  const serverUrl = OPU.normalizeServerUrl(msg.serverUrl);
+  let videoUrl = null;
+  try {
+    const u = new URL(msg.video && msg.video.url);
+    if (u.protocol === "https:" || u.protocol === "http:") videoUrl = u.href;
+  } catch {
+    // invalid URL
+  }
+  if (!OPU.isPartyId(msg.partyId) || !serverUrl || !videoUrl) return { error: "bad invite" };
+  const invite = {
+    partyId: msg.partyId,
+    serverUrl,
+    video: { url: videoUrl, title: String((msg.video && msg.video.title) || "").slice(0, 200) },
+    at: Date.now(),
+  };
+  await chrome.storage.session.set({ [INVITE_PREFIX + tabId]: invite, lastInvite: invite });
+  await chrome.tabs.update(tabId, { url: chrome.runtime.getURL("join/join.html") });
+  return { ok: true };
 }
 
 async function reconnectTab(tabId) {
@@ -474,6 +499,8 @@ async function handleContent(msg, sender) {
     case "frame-gone":
       if (s) s.report(frameId, 0);
       return {};
+    case "invite-open":
+      return openInvite(tabId, msg);
     case "has-video":
       return { hasVideo: !!s && [...s.frames.values()].some((score) => score > 0) };
     case "local-notice":
@@ -520,7 +547,11 @@ async function handleExtensionPage(msg) {
     case "start":
       return startParty(msg.tabId, msg);
     case "join":
-      return joinParty(msg.tabId, msg.code);
+      return joinParty(msg.tabId, msg.code, msg.serverUrl);
+    case "pending-invite": {
+      const key = INVITE_PREFIX + msg.tabId;
+      return (await chrome.storage.session.get(key))[key] || null;
+    }
     case "leave":
       await endSession(msg.tabId);
       return { ok: true };
@@ -571,7 +602,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 // ---- tab lifecycle -------------------------------------------------------
 
-chrome.tabs.onRemoved.addListener((tabId) => endSession(tabId, { notify: false }));
+chrome.tabs.onRemoved.addListener((tabId) => {
+  endSession(tabId, { notify: false });
+  chrome.storage.session.remove(INVITE_PREFIX + tabId);
+});
 
 // (Re)inject a party tab's scripts. Pages OpenParty can never run on (the
 // browser's own pages, OpenParty's join page) don't count as needing a reconnect.
