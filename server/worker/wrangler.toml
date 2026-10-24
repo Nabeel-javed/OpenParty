@@ -10,3 +10,7 @@ class_name = "Party"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Party"]
+
+# No request logs: the server keeps nothing about parties or people (see PRIVACY.md).
+[observability]
+enabled = false
