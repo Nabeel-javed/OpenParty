@@ -60,6 +60,25 @@ function startPageServer(p, videoPath, embedSrc) {
 <body style="margin:0;background:#000"><video src="/clip.webm" controls style="width:960px;height:540px"></video></body></html>`;
   const size = fs.statSync(videoPath).size;
   const server = http.createServer((req, res) => {
+    if (embedSrc && req.url.startsWith("/spa")) {
+      res.writeHead(200, { "content-type": "text/html" });
+      return res.end(`<!doctype html><title>Streaming site</title><h1>Pick a movie</h1>
+<iframe src="http://127.0.0.1:9/" width="300" height="60"></iframe>
+<script>
+  // Like a single-page site: Play opens a modal dialog with the player in a
+  // cross-origin iframe, and the dialog traps focus the way UI libraries do.
+  window.play = () => {
+    const dialog = document.createElement("div");
+    dialog.innerHTML = '<button id="close">Close</button><iframe src="${embedSrc}" width="980" height="560" allow="autoplay; fullscreen"></iframe>';
+    document.body.append(dialog);
+    const inside = dialog.querySelector("button");
+    inside.focus();
+    document.addEventListener("focusin", (e) => { if (!dialog.contains(e.target)) inside.focus(); });
+    document.addEventListener("focusout", (e) => { if (e.relatedTarget && !dialog.contains(e.relatedTarget)) inside.focus(); });
+    document.addEventListener("mousedown", (e) => { if (!dialog.contains(e.target)) e.preventDefault(); }, true);
+  };
+</script>`);
+    }
     if (embedSrc && req.url.startsWith("/embed")) {
       res.writeHead(200, { "content-type": "text/html" });
       return res.end(`<!doctype html><title>Embedded player</title><h1>Some article</h1>
@@ -288,6 +307,63 @@ async function main() {
   check("a guest on another page doesn't move the party", partyVideo === pageUrl, partyVideo);
   await cdp.eval(sw, `endSession(${host4.tabId})`);
   await cdp.eval(sw, `endSession(${guest4.tabId})`);
+
+  // Single-page site: the player iframe appears only after Play, inside a dialog
+  // that traps focus; a blocked frame sits on the page too.
+  const spaUrl = `http://127.0.0.1:${pagePort}/spa.html`;
+  async function openPlain(url) {
+    const { targetId } = await cdp.send("Target.createTarget", { url });
+    const session = await cdp.attach(targetId);
+    await sleep(1500);
+    const ids = await cdp.eval(sw, `chrome.tabs.query({}).then(ts => ts.map(t => t.id))`);
+    return { session, targetId, tabId: Math.max(...ids) };
+  }
+  const host5 = await openPlain(spaUrl);
+  const started5 = await cdp.eval(sw, `startParty(${host5.tabId}, { controlLock: false })`);
+  const guest5 = await openPlain(spaUrl);
+  const joined5 = await cdp.eval(sw, `joinParty(${guest5.tabId}, ${JSON.stringify(`${started5.partyId}@${syncHost}`)})`);
+  check("single-page site: party starts and guest joins before any video", !!started5.ok && !!joined5.ok, started5.error || joined5.error || "");
+  // Press Play in each tab while it's in front, as a person does (Chromium doesn't
+  // load media added to a background tab until it's shown).
+  for (const tab of [host5, guest5]) {
+    await cdp.send("Target.activateTarget", { targetId: tab.targetId });
+    await cdp.eval(tab.session, "play(), true");
+    await sleep(1500);
+  }
+  host5.contextId = await cdp.frameContext(host5.session, frameOrigin);
+  guest5.contextId = await cdp.frameContext(guest5.session, frameOrigin);
+  await sleep(2500);
+  await video(host5, "(v.currentTime = 40, v.play(), true)");
+  await sleep(4000);
+  h = await pos(host5);
+  g = await pos(guest5);
+  check("single-page site: player added later is synced", !g.paused && h.t > 41 && Math.abs(g.t - h.t) < 1.5, `host ${h.t.toFixed(1)} guest ${g.t.toFixed(1)}`);
+  await sleep(3000);
+
+  // Type in the guest's chat box while the dialog traps focus.
+  await cdp.eval(sw, `sessions.get(${guest5.tabId}).sendTop({ op: "show-panel" })`);
+  await sleep(800);
+  await cdp.send("Runtime.enable", {}, guest5.session);
+  let panelCtx = null;
+  for (let i = 0; i < 50 && !panelCtx; i++) {
+    panelCtx = cdp.contexts.findLast((c) => c.sessionId === guest5.session && c.auxData?.type === "isolated" && c.auxData?.frameId === guest5.targetId);
+    if (!panelCtx) await sleep(100);
+  }
+  const box = await cdp.eval(guest5.session, `(() => { const r = OP.ui.$("textarea").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`, panelCtx.id);
+  await cdp.send("Target.activateTarget", { targetId: guest5.targetId });
+  for (const type of ["mousePressed", "mouseReleased"]) {
+    await cdp.send("Input.dispatchMouseEvent", { type, x: box.x, y: box.y, button: "left", clickCount: 1 }, guest5.session);
+  }
+  await sleep(300);
+  await cdp.send("Input.insertText", { text: "typing past the focus trap" }, guest5.session);
+  for (const type of ["keyDown", "keyUp"]) {
+    await cdp.send("Input.dispatchKeyEvent", { type, key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: type === "keyDown" ? "\r" : undefined }, guest5.session);
+  }
+  await sleep(800);
+  const last5 = await cdp.eval(sw, `sessions.get(${host5.tabId}).room.messages.at(-1)?.text`);
+  check("single-page site: guest can type in the chat despite the focus trap", last5 === "typing past the focus trap", String(last5));
+  await cdp.eval(sw, `endSession(${host5.tabId})`);
+  await cdp.eval(sw, `endSession(${guest5.tabId})`);
 
   pageServer.close();
   frameServer.close();
