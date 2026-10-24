@@ -326,6 +326,32 @@ async function main() {
   g = await pos(guest2);
   check("embedded player: pause reaches the guest", g.paused && Math.abs(g.t - h.t) < 1, `host ${h.t.toFixed(1)} guest ${g.t.toFixed(1)}`);
 
+  await cdp.eval(sw, `endSession(${host2.tabId})`);
+  await cdp.eval(sw, `endSession(${guest2.tabId})`);
+
+  // One-click join: the guest only opens the invite link.
+  const host3 = await openTab();
+  await video(host3, "(v.currentTime = 50, v.play(), true)");
+  await sleep(1000);
+  const started3 = await cdp.eval(sw, `startParty(${host3.tabId}, { controlLock: false })`);
+  const { targetId: guestTarget } = await cdp.send("Target.createTarget", { url: `${syncUrl}/j/${started3.partyId}` });
+  const guest3 = { session: await cdp.attach(guestTarget) };
+  let landed = false;
+  for (let i = 0; i < 100 && !landed; i++) {
+    await sleep(100);
+    landed = await cdp.eval(guest3.session, `location.href === ${JSON.stringify(pageUrl)}`).catch(() => false);
+  }
+  check("invite link: guest lands on the video automatically", landed);
+  const ids3 = await cdp.eval(sw, `chrome.tabs.query({}).then(ts => ts.map(t => t.id))`);
+  guest3.tabId = Math.max(...ids3);
+  await sleep(4500);
+  const status3 = await cdp.eval(sw, `popupStatus(${guest3.tabId})`);
+  check("invite link: guest is in the party", status3.inParty && status3.partyId === started3.partyId, `${status3.users.length} users`);
+  check("invite link: guest sees the panel", await cdp.eval(guest3.session, "!!document.querySelector('openparty-panel')"));
+  h = await pos(host3);
+  g = await pos(guest3);
+  check("invite link: guest is in sync", !g.paused && h.t > 51 && Math.abs(g.t - h.t) < 1.5, `host ${h.t.toFixed(1)} guest ${g.t.toFixed(1)}`);
+
   pageServer.close();
   frameServer.close();
 }
