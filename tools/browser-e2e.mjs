@@ -91,7 +91,7 @@ function prepareExtension(syncUrl) {
   fs.cpSync(path.join(ROOT, "extension"), dest, { recursive: true });
   const manifestPath = path.join(dest, "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  manifest.host_permissions = ["http://127.0.0.1/*"];
+  manifest.host_permissions = ["<all_urls>"]; // the state after the one-time "allow access"
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   const utilPath = path.join(dest, "shared/util.js");
   const util = fs.readFileSync(utilPath, "utf8").replace(/const DEFAULT_SERVER_URL = "[^"]*";/, `const DEFAULT_SERVER_URL = "${syncUrl}";`);
