@@ -1,0 +1,32 @@
+OpenParty lets you watch videos together with friends, wherever they are. Start a party on the video you're watching, send the invite link, and everyone's playback stays in sync while you chat and react.
+
+It's free and open source. No accounts, no premium tier, no ads and no tracking.
+
+HOW IT WORKS
+1. Open a video and click the OpenParty icon.
+2. Press "Start a party" and copy the invite link.
+3. Friends open the link and land right in the party, on the same video, at the same moment.
+
+FEATURES
+• Works on most websites with a video player, including players embedded in other pages.
+• Anyone can play, pause or seek, and everyone follows. The host can lock control so only they can.
+• Chat, emoji reactions and a member list in a panel next to the video, also in fullscreen.
+• When the host moves to the next episode or video, everyone goes along.
+• Handles ads, buffering and live streams: anyone who falls behind catches up automatically.
+• Pick a name and avatar. No sign-up.
+
+PRIVATE BY DESIGN
+• OpenParty only runs in tabs that are in a party.
+• It collects nothing: no analytics, no trackers, no ads.
+• The sync server only relays what a party needs (the video link and title, playback position, names and chat) and deletes a party 10 minutes after everyone leaves.
+• Want full control? Run your own server for free and point OpenParty at it.
+
+GOOD TO KNOW
+• Everyone in the party needs their own access to the site being watched (their own subscription for paid services). OpenParty doesn't stream or share video; it keeps each person's own player in sync.
+• The first time you start or join a party, OpenParty asks once for access to websites, so it can find and sync the video on any site.
+
+OPEN SOURCE
+OpenParty is MIT-licensed. Source code, issues and contributions: https://github.com/Nabeel-javed/OpenParty
+Privacy policy: https://github.com/Nabeel-javed/OpenParty/blob/main/PRIVACY.md
+
+OpenParty is an independent project and isn't affiliated with any streaming service.
