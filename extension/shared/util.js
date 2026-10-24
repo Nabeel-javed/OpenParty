@@ -128,6 +128,7 @@
     isPartyId,
     parseInvite,
     serverForInvite,
+    isLocalHost,
     normalizeServerUrl,
     wsUrl,
     inviteUrl,

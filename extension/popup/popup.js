@@ -72,6 +72,7 @@ function renderParty() {
         ? "reconnecting…"
         : "connecting…";
   $("invite-url").value = status.inviteUrl;
+  $("local-server").hidden = !OPU.isLocalHost(new URL(status.inviteUrl).host);
   $("party-video").textContent = status.video ? `Watching: ${status.video.title}` : "";
   const elsewhere = !!status.video && OPU.videoKey(tab.url || "") !== OPU.videoKey(status.video.url);
   $("go-video").hidden = !elsewhere;
