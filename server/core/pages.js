@@ -25,11 +25,11 @@ const STYLE = `
   ol { color:var(--muted); padding-left:1.2rem; }
 `;
 
-function page(title, body) {
+function page(title, body, mainAttrs = "") {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>${escapeHtml(title)}</title><style>${STYLE}</style></head><body><main>${body}</main></body></html>`;
+<title>${escapeHtml(title)}</title><style>${STYLE}</style></head><body><main${mainAttrs}>${body}</main></body></html>`;
 }
 
 export function invitePage(room, host) {
@@ -37,16 +37,22 @@ export function invitePage(room, host) {
     return page("OpenParty", `<h1>Party not found</h1><p>This party has ended or the link is wrong.</p>`);
   }
   const link = inviteLink(room.video, room.id, host);
+  // The extension's invite script reads these attributes and takes over (one-click join).
+  const data =
+    ` id="openparty-invite" data-party-id="${escapeHtml(room.id)}"` +
+    ` data-video-url="${escapeHtml(room.video.url)}" data-video-title="${escapeHtml(room.video.title)}"`;
   return page(
     "Join my OpenParty",
     `<h1>You're invited to a watch party</h1>
 <p class="title">${escapeHtml(room.video.title)}</p>
+<p>Have OpenParty installed? You'll be taken into the party automatically.</p>
 <ol>
-  <li>Install the free OpenParty extension.</li>
-  <li>Open the video with the button below and sign in to the site if needed.</li>
-  <li>Click the OpenParty icon and press <b>Join</b>. Party code: <code>${escapeHtml(room.id)}</code></li>
+  <li>Install the free OpenParty extension, then open this link again.</li>
+  <li>Or open the video with the button below, click the OpenParty icon and press <b>Join</b>.
+      Party code: <code>${escapeHtml(room.id)}</code></li>
 </ol>
 <a class="btn" href="${escapeHtml(link)}" rel="noreferrer">Open the video</a>`,
+    data,
   );
 }
 
