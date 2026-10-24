@@ -573,6 +573,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => endSession(tabId, { notify: false }));
 
+// (Re)inject a party tab's scripts. Pages OpenParty can never run on (the
+// browser's own pages, OpenParty's join page) don't count as needing a reconnect.
+async function refresh(s) {
+  const result = await inject(s.tabId);
+  let webPage = false;
+  try {
+    webPage = /^https?:/.test((await chrome.tabs.get(s.tabId)).url || "");
+  } catch {
+    // tab closed
+  }
+  s.needsReconnect = !!result.error && webPage;
+  s.updateBadge();
+}
+
 chrome.tabs.onUpdated.addListener((tabId, change) => {
   const s = sessions.get(tabId);
   if (!s) return;
@@ -580,12 +594,13 @@ chrome.tabs.onUpdated.addListener((tabId, change) => {
     s.frames.clear();
     s.activeFrame = null;
   }
-  if (change.status === "complete") {
-    inject(tabId).then((result) => {
-      s.needsReconnect = !!result.error;
-      s.updateBadge();
-    });
-  }
+  if (change.status === "complete") refresh(s);
+});
+
+// Access granted after a start/join (the prompt may answer after the action
+// ran): set party tabs up again so new frames and reloaded pages join in.
+chrome.permissions.onAdded.addListener(() => {
+  for (const s of sessions.values()) refresh(s);
 });
 
 // A restarted service worker picks its parties back up.
