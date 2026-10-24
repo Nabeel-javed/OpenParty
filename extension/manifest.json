@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Free, open-source watch parties on any site with a video. Sync playback, chat and react with friends. No accounts, no tracking.",
   "minimum_chrome_version": "116",
+  "homepage_url": "https://github.com/Nabeel-javed/OpenParty",
   "permissions": ["storage", "scripting", "activeTab"],
   "optional_host_permissions": ["<all_urls>"],
   "background": {
