@@ -58,10 +58,13 @@
     form button:disabled, textarea:disabled { opacity: .5; }
     form .emoji-toggle { padding: 0 4px; background: none; font-size: 20px; font-weight: 400; border-radius: 8px; }
     form .emoji-toggle:hover, form .emoji-toggle.on { background: #ffffff14; }
-    .picker { position: absolute; left: 8px; right: 8px; bottom: 56px; max-height: 220px; overflow-y: auto;
-      padding: 6px; border-radius: 12px; background: #1d1d27; border: 1px solid #ffffff1f; box-shadow: 0 8px 24px #0009;
-      scrollbar-width: thin; }
-    .picker h3 { margin: 4px 4px 2px; font-size: 11px; font-weight: 600; color: #a0a0b2; }
+    .picker { position: absolute; left: 8px; right: 8px; bottom: 56px; height: 260px; display: flex; flex-direction: column;
+      border-radius: 12px; background: #1d1d27; border: 1px solid #ffffff1f; box-shadow: 0 8px 24px #0009; overflow: hidden; }
+    .picker .tabs { display: flex; justify-content: space-between; padding: 4px 6px; border-bottom: 1px solid #ffffff14; }
+    .picker .tabs button { width: 32px; height: 28px; border-radius: 8px; font-size: 16px; opacity: .7; }
+    .picker .tabs button:hover { background: #ffffff14; opacity: 1; }
+    .picker .groups { position: relative; flex: 1; overflow-y: auto; padding: 0 6px 6px; scrollbar-width: thin; }
+    .picker h3 { margin: 8px 4px 2px; font-size: 11px; font-weight: 600; color: #a0a0b2; }
     .picker .grid { display: grid; grid-template-columns: repeat(8, 1fr); }
     .picker .grid button { height: 32px; border-radius: 8px; font-size: 20px; line-height: 1; }
     .picker .grid button:hover { background: #ffffff14; }
@@ -75,13 +78,18 @@
       background: #2b2b38; box-shadow: 0 6px 20px #0008; }
   `;
 
-  // The chat box's emoji picker.
+  // The chat box's emoji picker: the common set, grouped like phone keyboards.
+  // Emoji 13.1 and older only, so nothing shows up as an empty box on older
+  // systems (Windows 10, older macOS).
   const EMOJI_GROUPS = [
-    ["Smileys", "😀 😃 😄 😁 😆 😅 🤣 😂 🙂 😉 😊 😇 🥰 😍 🤩 😘 😋 😜 🤪 😎 🤓 🥳 😏 🙄 😬 😴 🤤 🤔 🤭 🤫 🤗 😳 🥺 😢 😭 😤 😠 😡 🤯 😱 😨 😰 🥶 🥵 🤢 🤮 😵 💀 👻 🤡 💩 🙈"],
-    ["Gestures", "👍 👎 👏 🙌 👋 🤝 🙏 ✌️ 🤞 🤟 🤘 👌 👀 💪 🫡 🤷"],
-    ["Hearts", "❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 💕 💖 💯"],
-    ["Fun", "🍿 🎬 📺 🎉 🎊 🔥 ✨ ⭐ 💥 🥤 🍕 🍔 🍩 🍫 🎮 🏆"],
-  ].map(([name, list]) => [name, list.split(" ")]);
+    ["😀", "Smileys", "😀 😃 😄 😁 😆 😅 🤣 😂 🙂 🙃 😉 😊 😇 🥰 😍 🤩 😘 😗 ☺️ 😚 😙 🥲 😋 😛 😜 🤪 😝 🤑 🤗 🤭 🤫 🤔 🤐 🤨 😐 😑 😶 😏 😒 🙄 😬 🤥 😌 😔 😪 🤤 😴 😷 🤒 🤕 🤢 🤮 🤧 🥵 🥶 🥴 😵 🤯 🤠 🥳 🥸 😎 🤓 🧐 😕 😟 🙁 ☹️ 😮 😯 😲 😳 🥺 😦 😧 😨 😰 😥 😢 😭 😱 😖 😣 😞 😓 😩 😫 🥱 😤 😡 😠 🤬 😈 👿 💀 ☠️ 💩 🤡 👹 👺 👻 👽 👾 🤖 😺 😸 😹 😻 😼 😽 🙀 😿 😾 🙈 🙉 🙊"],
+    ["👋", "People", "👋 🤚 🖐️ ✋ 🖖 👌 🤌 🤏 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 👐 🤲 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🧠 👀 👁️ 👅 👄 💋 🙋 🙆 🙅 🤷 🤦 🙇 💁 🕺 💃 🏃 🚶 🧘 🛌 👶 🧒 👧 👦 🧑 👩 👨 🧓 👵 👴 👮 🕵️ 👷 🤴 👸 🦸 🦹 🧙 🧛 🧟 🧞 🧜 🧚 👼 🎅 🤶 👫 👭 👬 💏 💑 👪"],
+    ["❤️", "Hearts & symbols", "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 💯 💢 💥 💫 💦 💨 💬 💭 💤 ✅ ❌ ❓ ❗ ‼️ ⁉️ ⚠️ 🚫 ⭕ 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🆗 🆒 🆕 🆙 🔞 ♻️ ➕ ➖ ✖️ ➗ 🔝 🔜 ▶️ ⏸️ ⏯️ ⏹️ ⏭️ ⏮️ ⏩ ⏪ 🔁 🔀 🔊 🔇 🎵 🎶 ✔️ 🔔 🔕"],
+    ["🐶", "Animals & nature", "🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🐤 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🕷️ 🦂 🐢 🐍 🦎 🦖 🦕 🐙 🦑 🦐 🦀 🐡 🐠 🐟 🐬 🐳 🐋 🦈 🐊 🐅 🐆 🦓 🦍 🐘 🦛 🦏 🐪 🦒 🦘 🐄 🐎 🐖 🐑 🦙 🐐 🦌 🐕 🐩 🐈 🐓 🦃 🦚 🦜 🦢 🕊️ 🐇 🦝 🦨 🦡 🦦 🦥 🐁 🐿️ 🦔 🌵 🎄 🌲 🌳 🌴 🌱 🌿 ☘️ 🍀 🍁 🍂 🍃 🍄 🌾 💐 🌷 🌹 🥀 🌺 🌸 🌼 🌻 🌞 🌝 🌚 🌙 ⭐ 🌟 ✨ ⚡ 🔥 🌈 ☀️ ⛅ ☁️ 🌧️ ⛈️ ❄️ ☃️ ⛄ 🌊 💧 🌍"],
+    ["🍔", "Food & drink", "🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🍆 🥑 🥦 🥬 🥒 🌶️ 🌽 🥕 🧄 🧅 🥔 🍠 🥐 🥯 🍞 🥖 🧀 🥚 🍳 🧈 🥞 🧇 🥓 🥩 🍗 🍖 🌭 🍔 🍟 🍕 🥪 🌮 🌯 🥗 🍝 🍜 🍲 🍛 🍣 🍱 🥟 🍤 🍙 🍚 🍘 🍥 🥠 🍢 🍡 🍧 🍨 🍦 🥧 🧁 🍰 🎂 🍮 🍭 🍬 🍫 🍿 🍩 🍪 🥜 🍯 🥛 ☕ 🍵 🧃 🥤 🧋 🍶 🍺 🍻 🥂 🍷 🥃 🍸 🍹 🧉 🧊"],
+    ["⚽", "Activities", "🎉 🎊 🎈 🎁 🎀 🎃 🎆 🎇 🧨 🏆 🥇 🥈 🥉 🏅 🎖️ ⚽ 🏀 🏈 ⚾ 🎾 🏐 🏉 🎱 🏓 🏸 🥊 🥋 ⛳ 🎣 🎿 🛹 🎮 🕹️ 🎲 🧩 ♟️ 🎯 🎳 🎰 🎬 🎥 📺 📽️ 🎞️ 📷 📸 🎤 🎧 🎼 🎹 🥁 🎷 🎺 🎸 🎻 🎭 🎨 🧸 🪄"],
+    ["🚗", "Travel & objects", "🚗 🚕 🚌 🏎️ 🚓 🚑 🚒 🚲 🛵 🏍️ ✈️ 🚀 🛸 🚁 ⛵ 🚢 🗽 🗼 🏰 🏯 🎡 🎢 🏖️ 🏝️ 🏔️ 🌋 🏠 🏙️ 🌃 🌆 🌉 📱 💻 🖥️ ⌨️ 💡 🔦 📚 📖 ✏️ 📝 📌 📎 🔒 🔓 🔑 🔨 💣 🛡️ 💊 💉 💰 💵 💎 ⏰ ⌛ 📅 🛒 🎒 👓 🕶️ 👑 💍 👟 👗 👕 🧢"],
+  ].map(([icon, name, list]) => ({ icon, name, list: list.split(" ") }));
 
   // Built with DOM calls, not innerHTML: some sites enforce Trusted Types.
   function h(tag, props, ...children) {
@@ -128,10 +136,8 @@
         h(
           "div",
           { class: "picker", hidden: true, role: "dialog", "aria-label": "Emoji" },
-          ...EMOJI_GROUPS.flatMap(([name, list]) => [
-            h("h3", {}, name),
-            h("div", { class: "grid" }, ...list.map((e) => h("button", { type: "button", "data-emoji": e, title: e, "aria-label": e }, e))),
-          ]),
+          h("div", { class: "tabs" }, ...EMOJI_GROUPS.map((g, i) => h("button", { type: "button", "data-group": i, title: g.name, "aria-label": g.name }, g.icon))),
+          h("div", { class: "groups" }),
         ),
         h(
           "form",
@@ -221,7 +227,15 @@
       // Escape, a click elsewhere, or sending.
       const picker = this.$(".picker");
       const toggle = this.$(".emoji-toggle");
+      const groups = this.$(".picker .groups");
       this.showPicker = (on) => {
+        // Hundreds of buttons: build them the first time they're needed.
+        if (on && !groups.firstChild) {
+          for (const g of EMOJI_GROUPS) {
+            const grid = h("div", { class: "grid" }, ...g.list.map((e) => h("button", { type: "button", "data-emoji": e, title: e, "aria-label": e }, e)));
+            groups.append(h("h3", {}, g.name), grid);
+          }
+        }
         picker.hidden = !on;
         toggle.classList.toggle("on", on);
       };
@@ -231,7 +245,9 @@
       });
       picker.addEventListener("click", (e) => {
         const button = e.target.closest("button[data-emoji]");
-        if (button) this.insertText(button.dataset.emoji);
+        if (button) return this.insertText(button.dataset.emoji);
+        const tab = e.target.closest("button[data-group]");
+        if (tab) groups.scrollTop = groups.querySelectorAll("h3")[Number(tab.dataset.group)].offsetTop - 4;
       });
       shadow.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && !picker.hidden) {
