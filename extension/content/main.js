@@ -18,6 +18,7 @@
     urlTimer: null,
     lastKey: null,
     unblock: null,
+    frameObserver: null,
   };
 
   const findVideo = () => OP.bestVideo(site.video);
@@ -118,9 +119,41 @@
     }, 1000);
   }
 
+  // Players often arrive later, in a new iframe or one that navigates (single-page
+  // sites add theirs when you press Play): have OpenParty set up in those frames too.
+  function watchFrames() {
+    let timer = null;
+    const changed = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => state.inParty && OP.send({ op: "frames-changed" }), 500);
+    };
+    const tracked = new WeakSet();
+    const track = () => {
+      for (const frame of document.querySelectorAll("iframe, frame")) {
+        if (tracked.has(frame)) continue;
+        tracked.add(frame);
+        frame.addEventListener("load", changed); // also fires when the frame navigates
+      }
+    };
+    track();
+    state.frameObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType === 1 && (node.localName === "iframe" || node.querySelector("iframe"))) {
+            track();
+            changed();
+            return;
+          }
+        }
+      }
+    });
+    state.frameObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   function ensureLoops() {
     if (!state.scanTimer) state.scanTimer = setInterval(() => report(false), 2000);
     if (OP.isTop && !state.urlTimer) watchUrl();
+    if (!state.frameObserver) watchFrames();
   }
 
   function teardown(message) {
@@ -129,6 +162,8 @@
     clearInterval(state.scanTimer);
     clearInterval(state.urlTimer);
     state.scanTimer = state.urlTimer = null;
+    if (state.frameObserver) state.frameObserver.disconnect();
+    state.frameObserver = null;
     state.lastScore = -1;
     if (state.unblock) state.unblock.remove();
     state.unblock = null;

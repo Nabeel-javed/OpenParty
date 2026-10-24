@@ -258,6 +258,16 @@ class Session {
     if (this.activeFrame !== null) this.sendFrame(this.activeFrame, msg);
   }
 
+  // New or navigated frames (players that single-page sites add later) get the
+  // scripts too. Bursts of frame changes cost one injection.
+  reinject() {
+    if (this.reinjectTimer) return;
+    this.reinjectTimer = setTimeout(() => {
+      this.reinjectTimer = null;
+      if (sessions.get(this.tabId) === this) inject(this.tabId);
+    }, 300);
+  }
+
   sendTop(msg) {
     chrome.tabs.sendMessage(this.tabId, msg, { frameId: 0 }).catch(() => {});
   }
@@ -503,6 +513,9 @@ async function handleContent(msg, sender) {
       return openInvite(tabId, msg);
     case "has-video":
       return { hasVideo: !!s && [...s.frames.values()].some((score) => score > 0) };
+    case "frames-changed":
+      if (s) s.reinject();
+      return {};
     case "local-notice":
       if (s) s.sendTop({ op: "ui", kind: "local", data: { kind: msg.kind } });
       return {};
