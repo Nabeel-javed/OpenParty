@@ -6,7 +6,7 @@ OpenParty collects nothing about you. There are no accounts, analytics, ads, tra
 
 - It only runs on a page while that tab is in a party you started or joined. It doesn't read pages, browsing history, cookies, or your accounts on the sites you watch.
 - It stores your chosen name and avatar, and the server address, in your browser (`chrome.storage.local`). It never sends them anywhere except to the party you're in.
-- It asks for access to one site at a time, when you start or join a party there. You can remove access anytime in OpenParty's settings or in `chrome://extensions`.
+- It asks once for access to websites, the first time you start or join a party, so it can sync videos on any site. It still only runs in tabs that are in a party. You can remove access anytime in OpenParty's settings or in `chrome://extensions`.
 
 ## What the server sees
 
@@ -31,4 +31,4 @@ If you use someone else's server, they operate it. If you want full control, run
 | `activeTab` | Let OpenParty look at the tab you clicked the icon on, to find its video |
 | `scripting` | Inject the sync engine and panel into a party tab |
 | `storage` | Remember your name, avatar, server and the parties your tabs are in |
-| Optional site access | Requested per site, so a party survives page reloads and episode changes |
+| Optional access to websites | Asked for once, on first use, so OpenParty can sync the video on any site and keep the party through reloads and episode changes. Used only in party tabs |

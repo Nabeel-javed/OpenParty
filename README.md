@@ -6,7 +6,7 @@
 - **Everyone stays in step.** Play, pause and seek from anyone in the party (or lock control to the host). Clocks are synchronised against the server, so the party drifts less than a second apart.
 - **Chat, reactions and a member list** in a panel next to the video, also in fullscreen.
 - **Next episode follows along.** When the host moves to another video, everyone else is taken there.
-- **Private by design.** Nothing is collected. The server relays a party's state and forgets it 10 minutes after everyone leaves. See [PRIVACY.md](PRIVACY.md).
+- **Private by design.** Nothing is collected, and OpenParty only runs in tabs that are in a party. The server relays a party's state and forgets it 10 minutes after everyone leaves. See [PRIVACY.md](PRIVACY.md).
 - **Run your own server** in one command, with Node, Docker or Cloudflare's free tier. Invite links carry the server address, so friends join the right one automatically.
 
 Everyone in a party needs their own access to the site being watched (their own subscription for paid services).
@@ -23,9 +23,9 @@ Works in Chrome, Edge, Brave, Opera, Vivaldi and other Chromium browsers (versio
 
 ## Use it
 
-**Start a party:** open the video, click the OpenParty icon, press **Start a party** and allow access to the site when asked. Copy the invite link from the popup or the 🔗 button in the panel and send it to your friends.
+**Start a party:** open the video, click the OpenParty icon and press **Start a party** (the very first time, allow OpenParty access to websites). Copy the invite link from the popup or the 🔗 button in the panel and send it to your friends.
 
-**Join a party:** just open the invite link. With OpenParty installed you're taken straight into the party on the video. The first time on a new site, press **Join party** and allow access to the site. You can also paste a link or code into the popup from any tab.
+**Join a party:** just open the invite link. With OpenParty installed you're taken straight into the party on the video. The very first time, press **Join party** and allow OpenParty access to websites. You can also paste a link or code into the popup from any tab.
 
 **In the party:** play, pause and seek as usual and everyone follows. The 🍿 button opens the panel with chat, reactions and members. The host can lock playback (🔒) so only they control it.
 
