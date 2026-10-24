@@ -514,7 +514,8 @@ async function handleContent(msg, sender) {
       if (frameId !== s.activeFrame) return { error: "inactive frame" };
       return s.socket.request("state", { state: msg.state, timeMs: msg.timeMs, at: msg.at });
     case "video-changed":
-      if (frameId !== 0 || !s.room) return {};
+      // Only the host moves the party; a guest browsing to the video must not reset it.
+      if (frameId !== 0 || !s.room || !s.isHost) return {};
       if (OPU.videoKey(msg.url) === OPU.videoKey(s.room.video.url)) return {};
       return s.socket.request("video", { url: stripPartyFragment(msg.url), title: msg.title, durationMs: msg.durationMs || 0 });
     case "chat":
@@ -532,6 +533,7 @@ async function handleContent(msg, sender) {
       if (s.room) s.sendActive(s.activation());
       return {};
     case "leave":
+      leave(tabId);
       await endSession(tabId);
       return {};
   }
@@ -553,6 +555,7 @@ async function handleExtensionPage(msg) {
       return (await chrome.storage.session.get(key))[key] || null;
     }
     case "leave":
+      leave(msg.tabId);
       await endSession(msg.tabId);
       return { ok: true };
     case "reconnect":
@@ -629,6 +632,28 @@ chrome.tabs.onUpdated.addListener((tabId, change) => {
     s.activeFrame = null;
   }
   if (change.status === "complete") refresh(s);
+});
+
+// Opening an invite address (<video page>#openparty=<code>@<server>) joins that
+// party in the tab. Tab addresses are only visible for sites the user gave
+// OpenParty access to; elsewhere the popup offers to join instead.
+const leftParties = new Set();
+
+function leave(tabId) {
+  const s = sessions.get(tabId);
+  if (s) leftParties.add(s.info.partyId);
+}
+
+async function joinFromAddress(tabId, url) {
+  const invite = OPU.parseInvite(url);
+  if (!invite || !invite.host || leftParties.has(invite.partyId)) return;
+  const s = sessions.get(tabId);
+  if (s && s.info.partyId === invite.partyId) return;
+  await joinParty(tabId, url);
+}
+
+chrome.tabs.onUpdated.addListener((tabId, change) => {
+  if (change.url && /#openparty=/.test(change.url)) restored.then(() => joinFromAddress(tabId, change.url));
 });
 
 // Access granted after a start/join (the prompt may answer after the action

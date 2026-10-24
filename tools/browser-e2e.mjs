@@ -262,6 +262,32 @@ async function main() {
   h = await pos(host3);
   g = await pos(guest3);
   check("invite link: guest is in sync", !g.paused && h.t > 51 && Math.abs(g.t - h.t) < 1.5, `host ${h.t.toFixed(1)} guest ${g.t.toFixed(1)}`);
+  await cdp.eval(sw, `endSession(${host3.tabId})`);
+  await cdp.eval(sw, `endSession(${guest3.tabId})`);
+
+  // Invite address: a page address carrying #openparty=<code>@<server> joins by itself,
+  // even when the site lands the guest on a different page than the host's.
+  const host4 = await openTab();
+  await video(host4, "(v.currentTime = 70, v.play(), true)");
+  await sleep(1000);
+  const started4 = await cdp.eval(sw, `startParty(${host4.tabId}, { controlLock: false })`);
+  const guest4 = await openTab(`${pageUrl}?ep=2#openparty=${started4.partyId}@${syncHost}`);
+  let status4 = null;
+  for (let i = 0; i < 60 && !(status4 && status4.inParty && status4.status === "connected"); i++) {
+    await sleep(100);
+    status4 = await cdp.eval(sw, `popupStatus(${guest4.tabId})`);
+  }
+  check("invite address: guest joins without the popup", !!status4 && status4.inParty && status4.partyId === started4.partyId);
+  await sleep(4000);
+  h = await pos(host4);
+  g = await pos(guest4);
+  check("invite address: guest is in sync", !g.paused && h.t > 71 && Math.abs(g.t - h.t) < 1.5, `host ${h.t.toFixed(1)} guest ${g.t.toFixed(1)}`);
+  await cdp.eval(guest4.session, `history.pushState({}, "", "?ep=3"), true`); // as a single-page site does
+  await sleep(4000);
+  const partyVideo = await cdp.eval(sw, `sessions.get(${host4.tabId}).room.video.url`);
+  check("a guest on another page doesn't move the party", partyVideo === pageUrl, partyVideo);
+  await cdp.eval(sw, `endSession(${host4.tabId})`);
+  await cdp.eval(sw, `endSession(${guest4.tabId})`);
 
   pageServer.close();
   frameServer.close();
