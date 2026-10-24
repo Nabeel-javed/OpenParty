@@ -46,14 +46,25 @@ async function render() {
 
 async function renderStart() {
   probe = await bg("probe");
-  const invite = OPU.parseInvite(tab.url || "");
-  if (invite && !$("join-code").value) {
-    $("join-code").value = invite.host ? `${invite.partyId}@${invite.host}` : invite.partyId;
+  // An invite in this page's address, else the last invite link opened (some
+  // sites, like YouTube, drop the #openparty=… part from the address).
+  let invite = OPU.parseInvite(tab.url || "");
+  let inviteText = invite ? (invite.host ? `${invite.partyId}@${invite.host}` : invite.partyId) : "";
+  let invitedTo = "";
+  if (!invite) {
+    const { lastInvite } = await chrome.storage.session.get("lastInvite");
+    if (lastInvite && Date.now() - lastInvite.at < 3 * 3600_000) {
+      invite = lastInvite;
+      inviteText = OPU.inviteUrl(lastInvite.serverUrl, lastInvite.partyId);
+      invitedTo = lastInvite.video.title;
+    }
   }
+  if (invite && !$("join-code").value) $("join-code").value = inviteText;
   const hint = $("video-hint");
   $("start").disabled = !!probe.error;
-  if (probe.error) hint.textContent = "Open a page with a video to start a party. You can still join one below.";
+  if (invitedTo) hint.textContent = `You were invited to watch “${invitedTo}”. Press Join below.`;
   else if (invite) hint.textContent = "You were invited to this party. Press Join below.";
+  else if (probe.error) hint.textContent = "Open a page with a video to start a party. You can still join one below.";
   else if (probe.hasVideo) hint.textContent = "Video found on this page. Start a party and share the link.";
   else if (probe.iframeOrigins.length) hint.textContent = "This page embeds a video player. Start a party and allow access when asked.";
   else hint.textContent = "No video found yet. Start playing it first, or start the party anyway.";
