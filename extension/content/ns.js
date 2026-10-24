@@ -8,8 +8,31 @@
   OP.isTop = window === window.top;
   OP.sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  OP.send = (msg) =>
-    chrome.runtime.sendMessage(msg).catch(() => ({ error: "extension unavailable" }));
+  // When OpenParty is reloaded or updated, the scripts already in open pages are
+  // cut off and every call into the extension throws ("Extension context
+  // invalidated"). Notice that once, so they can shut down quietly.
+  OP.orphaned = false;
+  OP.onOrphaned = null;
+  OP.alive = () => {
+    if (OP.orphaned) return false;
+    try {
+      if (chrome.runtime && chrome.runtime.id) return true;
+    } catch {
+      // context invalidated
+    }
+    OP.orphaned = true;
+    if (OP.onOrphaned) OP.onOrphaned();
+    return false;
+  };
+
+  OP.send = (msg) => {
+    if (!OP.alive()) return Promise.resolve({ error: "extension unavailable" });
+    try {
+      return chrome.runtime.sendMessage(msg).catch(() => ({ error: "extension unavailable" }));
+    } catch {
+      return Promise.resolve({ error: "extension unavailable" });
+    }
+  };
 
   // Every <video>, including ones inside open shadow roots (custom players).
   OP.findVideos = (root = document) => {

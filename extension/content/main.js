@@ -24,7 +24,7 @@
   const findVideo = () => OP.bestVideo(site.video);
 
   function report(force) {
-    if (!state.inParty) return;
+    if (!state.inParty || !OP.alive()) return;
     const video = findVideo();
     const score = video ? OP.videoScore(video) : 0;
     const moved = Math.abs(score - state.lastScore) > Math.max(5000, state.lastScore * 0.15);
@@ -223,6 +223,12 @@
     ensureLoops();
     report(true);
   }
+
+  // OpenParty was reloaded or updated: this copy can't reach it any more, and the
+  // update ended the tab's party.
+  OP.onOrphaned = () => {
+    if (state.inParty) teardown("OpenParty was updated. Open the invite link again to rejoin.");
+  };
 
   OP.boot = boot;
   boot();
