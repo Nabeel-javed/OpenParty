@@ -365,6 +365,29 @@ async function main() {
   await cdp.eval(sw, `endSession(${host5.tabId})`);
   await cdp.eval(sw, `endSession(${guest5.tabId})`);
 
+  // Last, as it restarts the extension: reloading OpenParty (as an update does)
+  // cuts off the scripts already in pages. They must stop without errors and
+  // take their panel with them.
+  const host6 = await openTab();
+  await video(host6, "(v.play(), true)");
+  await cdp.eval(sw, `startParty(${host6.tabId}, { controlLock: false })`);
+  await sleep(2000);
+  const errors6 = [];
+  cdp.ws.addEventListener("message", (e) => {
+    const m = JSON.parse(e.data);
+    if (m.sessionId === host6.session && m.method === "Runtime.exceptionThrown") {
+      const d = m.params.exceptionDetails;
+      errors6.push((d.exception && d.exception.description) || d.text);
+    }
+  });
+  await cdp.send("Runtime.enable", {}, host6.session);
+  cdp.send("Runtime.evaluate", { expression: "chrome.runtime.reload()" }, sw).catch(() => {});
+  await sleep(1500);
+  await video(host6, "(v.pause(), true)"); // the old sync engine tries to report this
+  await sleep(8000);
+  check("after an update: old page scripts throw no errors", errors6.length === 0, errors6[0] ? errors6[0].split("\n")[0] : "");
+  check("after an update: the old panel is gone", !(await cdp.eval(host6.session, "!!document.querySelector('openparty-panel')")));
+
   pageServer.close();
   frameServer.close();
 }
