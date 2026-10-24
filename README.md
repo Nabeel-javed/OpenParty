@@ -25,7 +25,7 @@ Works in Chrome, Edge, Brave, Opera, Vivaldi and other Chromium browsers (versio
 
 **Start a party:** open the video, click the OpenParty icon, press **Start a party** and allow access to the site when asked. Copy the invite link from the popup or the 🔗 button in the panel and send it to your friends.
 
-**Join a party:** open the invite link, then **Open the video**, click the OpenParty icon and press **Join**. You can also paste a link or code into the popup from any tab, and OpenParty takes you to the video.
+**Join a party:** just open the invite link. With OpenParty installed you're taken straight into the party on the video. The first time on a new site, press **Join party** and allow access to the site. You can also paste a link or code into the popup from any tab.
 
 **In the party:** play, pause and seek as usual and everyone follows. The 🍿 button opens the panel with chat, reactions and members. The host can lock playback (🔒) so only they control it.
 
