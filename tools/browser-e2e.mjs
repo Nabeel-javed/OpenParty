@@ -18,6 +18,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { sleep, launchChromium, extensionWorker } from "./cdp.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = Object.fromEntries(
@@ -31,7 +32,6 @@ if (!args.chromium || !args.video) {
   process.exit(2);
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const port = () => 20000 + Math.floor(Math.random() * 30000);
 const work = args.workdir ? path.resolve(args.workdir) : fs.mkdtempSync(path.join(os.tmpdir(), "openparty-e2e-"));
 fs.mkdirSync(work, { recursive: true });
@@ -94,75 +94,13 @@ function prepareExtension(syncUrl) {
   const manifestPath = path.join(dest, "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   manifest.host_permissions = ["<all_urls>"]; // the state after the one-time "allow access"
+  const { protocol, hostname } = new URL(syncUrl);
+  manifest.content_scripts[0].matches.push(`${protocol}//${hostname}/j/*`); // one-click join from the test server's invite pages
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   const utilPath = path.join(dest, "shared/util.js");
   const util = fs.readFileSync(utilPath, "utf8").replace(/const DEFAULT_SERVER_URL = "[^"]*";/, `const DEFAULT_SERVER_URL = "${syncUrl}";`);
   fs.writeFileSync(utilPath, util);
   return dest;
-}
-
-// ---- minimal CDP client --------------------------------------------------
-
-class CDP {
-  static async connect(debugPort) {
-    let info;
-    for (let i = 0; i < 100 && !info; i++) {
-      info = await fetch(`http://127.0.0.1:${debugPort}/json/version`)
-        .then((r) => r.json())
-        .catch(() => null);
-      if (!info) await sleep(100);
-    }
-    if (!info) throw new Error("Chromium did not expose DevTools");
-    const cdp = new CDP(new WebSocket(info.webSocketDebuggerUrl));
-    await new Promise((r) => cdp.ws.addEventListener("open", r, { once: true }));
-    return cdp;
-  }
-
-  constructor(ws) {
-    this.ws = ws;
-    this.id = 1;
-    this.pending = new Map();
-    this.contexts = []; // Runtime.executionContextCreated payloads, with their session
-    ws.addEventListener("message", (e) => {
-      const msg = JSON.parse(e.data);
-      if (msg.id && this.pending.has(msg.id)) {
-        const { resolve, reject } = this.pending.get(msg.id);
-        this.pending.delete(msg.id);
-        msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
-      } else if (msg.method === "Runtime.executionContextCreated") {
-        this.contexts.push({ sessionId: msg.sessionId, ...msg.params.context });
-      }
-    });
-  }
-
-  send(method, params = {}, sessionId) {
-    const id = this.id++;
-    this.ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
-    return new Promise((resolve, reject) => this.pending.set(id, { resolve, reject }));
-  }
-
-  async eval(sessionId, expression, contextId) {
-    const params = { expression, awaitPromise: true, returnByValue: true, ...(contextId ? { contextId } : {}) };
-    const res = await this.send("Runtime.evaluate", params, sessionId);
-    if (res.exceptionDetails) throw new Error(res.exceptionDetails.exception?.description || res.exceptionDetails.text);
-    return res.result.value;
-  }
-
-  // The main-world context of a frame with the given origin inside a page session.
-  async frameContext(sessionId, origin) {
-    await this.send("Runtime.enable", {}, sessionId);
-    for (let i = 0; i < 100; i++) {
-      const ctx = this.contexts.find((c) => c.sessionId === sessionId && c.origin === origin && c.auxData && c.auxData.isDefault);
-      if (ctx) return ctx.id;
-      await sleep(100);
-    }
-    throw new Error(`no frame context for ${origin}`);
-  }
-
-  async attach(targetId) {
-    const { sessionId } = await this.send("Target.attachToTarget", { targetId, flatten: true });
-    return sessionId;
-  }
 }
 
 // ---- the test ------------------------------------------------------------
@@ -183,45 +121,15 @@ async function main() {
   const frameServer = await startPageServer(framePort, path.resolve(args.video));
   const extPath = prepareExtension(syncUrl);
 
-  // A fresh profile each run: Chromium caches extension service workers.
-  const profile = path.join(work, "profile");
-  fs.rmSync(profile, { recursive: true, force: true });
-  const chrome = spawn(
-    args.chromium,
-    [
-      `--user-data-dir=${profile}`,
-      `--load-extension=${extPath}`,
-      `--disable-extensions-except=${extPath}`,
-      `--remote-debugging-port=${debugPort}`,
-      "--autoplay-policy=no-user-gesture-required",
-      "--no-first-run",
-      "--no-default-browser-check",
-      "--disable-background-timer-throttling",
-      "--disable-renderer-backgrounding",
-      "--disable-backgrounding-occluded-windows",
-      ...(args.headful ? [] : ["--headless=new"]),
-      "about:blank",
-    ],
-    { stdio: "ignore" },
-  );
+  const { proc: chrome, cdp } = await launchChromium({
+    chromium: args.chromium,
+    profile: path.join(work, "profile"),
+    extPath,
+    debugPort,
+    headful: args.headful,
+  });
   children.push(chrome);
-  const cdp = await CDP.connect(debugPort);
-
-  // OpenParty's service worker (some Chromium builds run other extensions too).
-  let sw = null;
-  for (let i = 0; i < 100 && !sw; i++) {
-    const { targetInfos } = await cdp.send("Target.getTargets");
-    for (const t of targetInfos.filter((t) => t.type === "service_worker" && t.url.startsWith("chrome-extension://"))) {
-      const session = await cdp.attach(t.targetId);
-      const name = await cdp.eval(session, "chrome.runtime.getManifest().name").catch(() => null);
-      if (name === "OpenParty") {
-        sw = session;
-        break;
-      }
-    }
-    if (!sw) await sleep(100);
-  }
-  if (!sw) throw new Error("OpenParty service worker not found");
+  const sw = await extensionWorker(cdp, "OpenParty");
   await cdp.eval(sw, `chrome.storage.local.set({ serverUrl: ${JSON.stringify(syncUrl)}, name: "Tester" })`);
 
   // Opens a tab; with `frame`, the video lives in a cross-origin iframe of that origin.
