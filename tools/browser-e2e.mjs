@@ -373,6 +373,11 @@ async function main() {
   };
   await clickAt(".emoji-toggle");
   const pickerOpen = await cdp.eval(guest5.session, `!OP.ui.$(".picker").hidden`, panelCtx.id);
+  const emojiCount = await cdp.eval(guest5.session, `OP.ui.$(".picker").querySelectorAll("button[data-emoji]").length`, panelCtx.id);
+  await clickAt('.picker button[data-group="4"]'); // Food & drink
+  const jumped = await cdp.eval(guest5.session, `(() => { const g = OP.ui.$(".picker .groups"); const h = g.querySelectorAll("h3")[4]; return Math.abs(g.scrollTop - (h.offsetTop - 4)) < 2 && g.scrollTop > 0; })()`, panelCtx.id);
+  check("emoji picker: all groups, and tabs jump to them", emojiCount >= 600 && jumped, `${emojiCount} emojis, jumped: ${jumped}`);
+  await cdp.eval(guest5.session, `OP.ui.$(".picker .groups").scrollTop = 0, true`, panelCtx.id);
   await clickAt('.picker button[data-emoji="😂"]');
   await cdp.send("Input.insertText", { text: " lol" }, guest5.session);
   for (const type of ["keyDown", "keyUp"]) {
