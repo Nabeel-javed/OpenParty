@@ -34,10 +34,10 @@ test("every injected and imported script exists and parses", () => {
   const pageFiles = [...bg.matchAll(/file: "([^"]+)"/g)].map((m) => m[1]);
   const imported = [...bg.match(/importScripts\(([^)]*)\)/)[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   const base = new URL("chrome-extension://x/");
-  const pages = ["popup/popup.html", "options/options.html"].flatMap((page) =>
+  const pages = ["popup/popup.html", "options/options.html", "join/join.html"].flatMap((page) =>
     [...read(page).matchAll(/<script src="([^"]+)"/g)].map((m) => new URL(m[1], new URL(page, base)).pathname.slice(1)),
   );
-  assert.ok(pages.includes("popup/popup.js") && pages.includes("options/options.js"));
+  assert.ok(["popup/popup.js", "options/options.js", "join/join.js"].every((f) => pages.includes(f)));
   assert.ok(contentFiles.length >= 8);
   assert.equal(contentFiles.at(-1), "content/main.js", "main.js must run last");
   for (const f of ["background.js", ...contentFiles, ...pageFiles, ...imported, ...pages]) {

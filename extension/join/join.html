@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Join the watch party · OpenParty</title>
+    <link rel="stylesheet" href="../popup/popup.css" />
+    <style>
+      body { width: auto; min-height: 100vh; display: grid; place-items: center; }
+      .card { width: min(420px, calc(100vw - 32px)); padding: 28px; border: 1px solid var(--line); border-radius: 16px;
+        display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 40px #0002; }
+      h1 { font-size: 20px; flex: none; }
+      .video-title { margin: 0; font-size: 16px; font-weight: 650; word-break: break-word; }
+      .brand { display: flex; align-items: center; gap: 10px; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="brand">
+        <img src="../icons/icon48.png" width="40" height="40" alt="" />
+        <h1>Join the watch party</h1>
+      </div>
+      <p id="video-title" class="video-title"></p>
+      <p id="site" class="hint"></p>
+      <div class="row">
+        <button id="avatar" title="Change avatar">🍿</button>
+        <input id="name" type="text" maxlength="24" placeholder="Your name" aria-label="Your name" />
+      </div>
+      <button id="join" class="primary">Join party</button>
+      <p id="status" class="hint"></p>
+      <p id="error" class="error" role="alert" hidden></p>
+    </main>
+    <script src="../shared/util.js"></script>
+    <script src="join.js"></script>
+  </body>
+</html>
