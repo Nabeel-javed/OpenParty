@@ -8,7 +8,7 @@
   const PARTY_ID_RE = /^[23456789abcdefghjkmnpqrstuvwxyz]{10}$/;
 
   // The free public server (server/worker on Cloudflare). Self-hosters can change it here or in settings.
-  const DEFAULT_SERVER_URL = "https://openparty.openparty-worker.workers.dev";
+  const DEFAULT_SERVER_URL = "https://party.openparty.workers.dev";
 
   const DEFAULT_SETTINGS = {
     serverUrl: DEFAULT_SERVER_URL,

@@ -50,7 +50,7 @@ Protocol details: [docs/protocol.md](docs/protocol.md).
 
 ## Run a server
 
-You don't need one: OpenParty uses the free public server at `openparty.openparty-worker.workers.dev` (this repository's `server/worker`, on Cloudflare). To run your own:
+You don't need one: OpenParty uses the free public server at `party.openparty.workers.dev` (this repository's `server/worker`, on Cloudflare). To run your own:
 
 ```sh
 # Node (any machine)
@@ -71,7 +71,7 @@ Then set the server address in OpenParty's settings. Full guide: [docs/self-host
 ```sh
 npm test                      # unit + end-to-end tests (Node 22+)
 node tools/browser-e2e.mjs --chromium /path/to/Chromium --video clip.webm   # real-browser test
-OPENPARTY_LIVE_URL=https://openparty.openparty-worker.workers.dev node --test test/live.e2e.test.js   # check a deployed server
+OPENPARTY_LIVE_URL=https://party.openparty.workers.dev node --test test/live.e2e.test.js   # check a deployed server
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), including how to add support for a site.

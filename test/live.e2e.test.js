@@ -4,7 +4,7 @@ import { randomId } from "../server/core/party.js";
 import { runScenario } from "./helpers/client.js";
 
 // Smoke test for a deployed server; skipped unless OPENPARTY_LIVE_URL is set:
-//   OPENPARTY_LIVE_URL=https://openparty.openparty-worker.workers.dev node --test test/live.e2e.test.js
+//   OPENPARTY_LIVE_URL=https://party.openparty.workers.dev node --test test/live.e2e.test.js
 const BASE = process.env.OPENPARTY_LIVE_URL?.replace(/\/+$/, "");
 
 test("deployed server end to end", { skip: !BASE && "set OPENPARTY_LIVE_URL" }, async (t) => {

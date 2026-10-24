@@ -22,7 +22,7 @@ To run a party, the sync server receives:
 
 The server keeps a party in memory (or in Durable Object storage on Cloudflare) only while it's in use. Everything is deleted 10 minutes after the last member leaves. The reference servers in this repository write no logs about parties or people.
 
-The default server, `openparty.openparty-worker.workers.dev`, runs this repository's code on Cloudflare Workers with request logging turned off. Cloudflare, as the host, handles the network traffic under [its own privacy policy](https://www.cloudflare.com/privacypolicy/). If you use someone else's server, they operate it. If you want full control, run your own (see [docs/self-hosting.md](docs/self-hosting.md)).
+The default server, `party.openparty.workers.dev`, runs this repository's code on Cloudflare Workers with request logging turned off. Cloudflare, as the host, handles the network traffic under [its own privacy policy](https://www.cloudflare.com/privacypolicy/). If you use someone else's server, they operate it. If you want full control, run your own (see [docs/self-hosting.md](docs/self-hosting.md)).
 
 ## Permissions
 

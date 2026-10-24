@@ -20,7 +20,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://openparty.openparty-worker.workers.dev/j/*", "http://localhost/j/*", "http://127.0.0.1/j/*"],
+      "matches": ["https://party.openparty.workers.dev/j/*", "http://localhost/j/*", "http://127.0.0.1/j/*"],
       "js": ["invite/invite.js"],
       "run_at": "document_idle"
     }
