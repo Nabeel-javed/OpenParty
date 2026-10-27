@@ -13,13 +13,11 @@ Everyone in a party needs their own access to the site being watched (their own 
 
 ## Install
 
-OpenParty isn't in the Chrome Web Store yet. To try it now:
-
-1. Download or clone this repository.
-2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick the `extension` folder.
-3. Pin the OpenParty icon to the toolbar.
+Get OpenParty from the [Chrome Web Store](https://chromewebstore.google.com/detail/openparty/kadbnppelahhppgpaaipkjogpjeddcmb), then pin its icon to the toolbar.
 
 Works in Chrome, Edge, Brave, Opera, Vivaldi and other Chromium browsers (version 116+).
+
+To run the latest code from this repository instead: download or clone it, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick the `extension` folder.
 
 ## Use it
 
