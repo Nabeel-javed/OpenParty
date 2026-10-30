@@ -346,7 +346,8 @@ async function main() {
   await cdp.send("Runtime.enable", {}, guest5.session);
   let panelCtx = null;
   for (let i = 0; i < 50 && !panelCtx; i++) {
-    panelCtx = cdp.contexts.findLast((c) => c.sessionId === guest5.session && c.auxData?.type === "isolated" && c.auxData?.frameId === guest5.targetId);
+    // The extension's world is named after it; browsers like Brave add isolated worlds of their own.
+    panelCtx = cdp.contexts.findLast((c) => c.sessionId === guest5.session && c.auxData?.type === "isolated" && c.auxData?.frameId === guest5.targetId && c.name === "OpenParty");
     if (!panelCtx) await sleep(100);
   }
   const box = await cdp.eval(guest5.session, `(() => { const r = OP.ui.$("textarea").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`, panelCtx.id);
