@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 14 60 70" width="360" height="420">
+  <defs><linearGradient id="gold" x1="0" y1="17" x2="0" y2="81" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#F6C25A"/><stop offset="1" stop-color="#DC8F26"/></linearGradient>
+  <linearGradient id="ivory" x1="0" y1="17" x2="0" y2="81" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FBF7EF"/><stop offset="1" stop-color="#E6DDCC"/></linearGradient></defs>
+  <g fill="url(#gold)"><circle cx="35" cy="26.5" r="9.5"/><path d="M23.5 52A11.5 11.5 0 0 1 46.5 52L46.5 76A5 5 0 0 1 41.5 81L28.5 81A5 5 0 0 1 23.5 76Z"/></g>
+  <g fill="url(#ivory)"><circle cx="65" cy="26.5" r="9.5"/><path d="M53.5 52A11.5 11.5 0 0 1 76.5 52L76.5 76A5 5 0 0 1 71.5 81L58.5 81A5 5 0 0 1 53.5 76Z"/></g>
+</svg>

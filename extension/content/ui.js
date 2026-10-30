@@ -8,18 +8,18 @@
     :host { all: initial; }
     * { box-sizing: border-box; }
     .root { position: fixed; z-index: 2147483647; right: 16px; bottom: 16px;
-      font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #ececf3; }
+      font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #F3EEE3; }
     button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
     .fab { position: relative; width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(160deg, #7c5cff, #4f38e6); box-shadow: 0 6px 20px #0007;
+      background: linear-gradient(160deg, #F6C25A, #DC8F26); box-shadow: 0 6px 20px #0007;
       display: grid; place-items: center; font-size: 22px; }
     .fab-count { position: absolute; bottom: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px;
-      border-radius: 10px; background: #16161d; border: 2px solid #7c5cff; font-size: 11px; font-weight: 700;
+      border-radius: 10px; background: #17140F; border: 2px solid #E9A23B; font-size: 11px; font-weight: 700;
       display: grid; place-items: center; }
     .fab-dot { position: absolute; top: 0; right: 0; width: 12px; height: 12px; border-radius: 50%;
-      background: #ff4d6d; border: 2px solid #16161d; }
+      background: #ff4d6d; border: 2px solid #17140F; }
     .panel { position: fixed; right: 16px; bottom: 76px; width: 320px; height: min(520px, calc(100vh - 110px));
-      display: flex; flex-direction: column; background: rgba(22, 22, 30, 0.95); border: 1px solid #ffffff1a;
+      display: flex; flex-direction: column; background: rgba(23, 20, 15, 0.95); border: 1px solid #ffffff1a;
       border-radius: 14px; box-shadow: 0 12px 40px #000a; backdrop-filter: blur(10px); overflow: hidden; }
     [hidden] { display: none !important; }
     header { padding: 10px 10px 8px 12px; border-bottom: 1px solid #ffffff14; }
@@ -30,52 +30,52 @@
     .actions { display: flex; gap: 2px; }
     .actions button { width: 28px; height: 28px; border-radius: 8px; font-size: 14px; }
     .actions button:hover { background: #ffffff14; }
-    .actions button.on { background: #7c5cff33; }
+    .actions button.on { background: #E9A23B33; }
     .actions button.warn { background: #ff4d6d; color: #fff; width: auto; padding: 0 8px; font-size: 12px; }
     .actions button:disabled { opacity: .35; cursor: default; }
     .users { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
     .user { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border-radius: 12px;
       background: #ffffff10; font-size: 12px; max-width: 140px; }
     .user .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user.me { outline: 1px solid #7c5cff88; }
+    .user.me { outline: 1px solid #E9A23B88; }
     .log { flex: 1; overflow-y: auto; margin: 0; padding: 8px 10px; list-style: none; display: flex;
       flex-direction: column; gap: 6px; scrollbar-width: thin; }
     .msg { display: flex; gap: 8px; }
     .msg .av { font-size: 18px; line-height: 1.2; }
-    .msg .who { font-weight: 650; font-size: 12px; color: #b9b3ff; }
+    .msg .who { font-weight: 650; font-size: 12px; color: #F2C46D; }
     .msg .text { white-space: pre-wrap; word-break: break-word; }
-    .sys { color: #a0a0b2; font-size: 12px; text-align: center; }
-    .sys button { color: #b9b3ff; text-decoration: underline; padding: 0 2px; }
-    .typing { min-height: 18px; padding: 0 12px; font-size: 11px; color: #a0a0b2; }
+    .sys { color: #9C9487; font-size: 12px; text-align: center; }
+    .sys button { color: #F2C46D; text-decoration: underline; padding: 0 2px; }
+    .typing { min-height: 18px; padding: 0 12px; font-size: 11px; color: #9C9487; }
     .reactions { display: flex; justify-content: space-between; padding: 4px 8px; border-top: 1px solid #ffffff14; }
     .reactions button { font-size: 18px; width: 32px; height: 32px; border-radius: 8px; }
     .reactions button:hover { background: #ffffff14; transform: scale(1.1); }
     form { display: flex; gap: 6px; padding: 8px; border-top: 1px solid #ffffff14; }
     textarea { flex: 1; resize: none; height: 36px; padding: 8px 10px; border-radius: 10px; border: 1px solid #ffffff1f;
-      background: #0e0e14; color: #ececf3; font: inherit; outline: none; }
-    textarea:focus { border-color: #7c5cff; }
-    form button { padding: 0 12px; border-radius: 10px; background: #5b4bff; font-weight: 650; }
+      background: #0F0D0A; color: #F3EEE3; font: inherit; outline: none; }
+    textarea:focus { border-color: #E9A23B; }
+    form button { padding: 0 12px; border-radius: 10px; background: #E9A23B; color: #17140F; font-weight: 650; }
     form button:disabled, textarea:disabled { opacity: .5; }
     form .emoji-toggle { padding: 0 4px; background: none; font-size: 20px; font-weight: 400; border-radius: 8px; }
     form .emoji-toggle:hover, form .emoji-toggle.on { background: #ffffff14; }
     .picker { position: absolute; left: 8px; right: 8px; bottom: 56px; height: 260px; display: flex; flex-direction: column;
-      border-radius: 12px; background: #1d1d27; border: 1px solid #ffffff1f; box-shadow: 0 8px 24px #0009; overflow: hidden; }
+      border-radius: 12px; background: #1E1A14; border: 1px solid #ffffff1f; box-shadow: 0 8px 24px #0009; overflow: hidden; }
     .picker .tabs { display: flex; justify-content: space-between; padding: 4px 6px; border-bottom: 1px solid #ffffff14; }
     .picker .tabs button { width: 32px; height: 28px; border-radius: 8px; font-size: 16px; opacity: .7; }
     .picker .tabs button:hover { background: #ffffff14; opacity: 1; }
     .picker .groups { position: relative; flex: 1; overflow-y: auto; padding: 0 6px 6px; scrollbar-width: thin; }
-    .picker h3 { margin: 8px 4px 2px; font-size: 11px; font-weight: 600; color: #a0a0b2; }
+    .picker h3 { margin: 8px 4px 2px; font-size: 11px; font-weight: 600; color: #9C9487; }
     .picker .grid { display: grid; grid-template-columns: repeat(8, 1fr); }
     .picker .grid button { height: 32px; border-radius: 8px; font-size: 20px; line-height: 1; }
     .picker .grid button:hover { background: #ffffff14; }
     .toast { position: absolute; left: 12px; right: 12px; bottom: 60px; padding: 8px 10px; border-radius: 10px;
-      background: #2b2b38; border: 1px solid #ffffff1f; font-size: 12px; text-align: center; }
+      background: #2E2920; border: 1px solid #ffffff1f; font-size: 12px; text-align: center; }
     .float { position: fixed; bottom: 90px; font-size: 32px; pointer-events: none;
       animation: rise 2.6s ease-out forwards; }
     @keyframes rise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: 1; transform: translateY(-30px) scale(1.1); }
       100% { transform: translateY(-320px) scale(1); opacity: 0; } }
     .standalone { position: fixed; right: 16px; bottom: 16px; padding: 10px 14px; border-radius: 12px;
-      background: #2b2b38; box-shadow: 0 6px 20px #0008; }
+      background: #2E2920; box-shadow: 0 6px 20px #0008; }
   `;
 
   // The chat box's emoji picker: the common set, grouped like phone keyboards.

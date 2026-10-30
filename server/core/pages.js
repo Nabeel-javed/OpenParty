@@ -14,16 +14,16 @@ export function inviteLink(video, partyId, host) {
 const STORE_URL = "https://chromewebstore.google.com/detail/openparty/kadbnppelahhppgpaaipkjogpjeddcmb";
 
 const STYLE = `
-  :root { color-scheme: light dark; --bg:#f7f7fb; --fg:#16161d; --muted:#5b5b6b; --card:#fff; --accent:#5b4bff; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#111116; --fg:#ececf3; --muted:#a0a0b2; --card:#1b1b23; --accent:#8b7dff; } }
+  :root { color-scheme: light dark; --bg:#f6f1e7; --fg:#17140f; --muted:#6e675c; --card:#fffdf9; --accent:#a86a12; --btn:#e9a23b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0e0d0b; --fg:#f3eee3; --muted:#9c9487; --card:#1a1712; --accent:#e9a23b; } }
   body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--fg);
          font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
   main { max-width:30rem; margin:1rem; padding:2rem; background:var(--card); border-radius:16px; box-shadow:0 4px 24px #0002; }
   h1 { margin:0 0 .25rem; font-size:1.4rem; } p { color:var(--muted); }
   .title { color:var(--fg); font-weight:600; word-break:break-word; }
   code { font-size:1.3rem; letter-spacing:.08em; padding:.2rem .5rem; border-radius:8px; background:var(--bg); }
-  a.btn { display:inline-block; margin-top:1rem; padding:.7rem 1.2rem; border-radius:10px; background:var(--accent);
-          color:#fff; text-decoration:none; font-weight:600; }
+  a.btn { display:inline-block; margin-top:1rem; padding:.7rem 1.2rem; border-radius:10px; background:var(--btn);
+          color:#17140f; text-decoration:none; font-weight:600; }
   ol { color:var(--muted); padding-left:1.2rem; } ol a { color:var(--accent); }
 `;
 

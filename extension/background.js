@@ -274,7 +274,7 @@ class Session {
 
   updateBadge() {
     let text = "…";
-    let color = "#5b4bff";
+    let color = "#E9A23B";
     if (this.needsReconnect) {
       text = "!";
       color = "#d93025";

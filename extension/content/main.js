@@ -83,7 +83,7 @@
     const shadow = host.attachShadow({ mode: "closed" });
     const style = document.createElement("style");
     style.textContent = `button { position: fixed; inset: 0; margin: auto; width: 260px; height: 64px; z-index: 2147483647;
-      border: 0; border-radius: 14px; background: #5b4bff; color: #fff; font: 600 16px system-ui, sans-serif;
+      border: 0; border-radius: 14px; background: #E9A23B; color: #17140F; font: 600 16px system-ui, sans-serif;
       box-shadow: 0 8px 30px #000a; cursor: pointer; }`;
     const button = document.createElement("button");
     button.textContent = "▶ Click to join playback";
