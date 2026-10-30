@@ -1,6 +1,6 @@
 # Chrome Web Store listing
 
-Everything to paste into the [developer dashboard](https://chrome.google.com/webstore/devconsole), by tab. Images are in this folder; regenerate them with `tools/store-assets.mjs`. Build the upload with `npm run package` (writes `dist/openparty-<version>.zip`).
+Everything to paste into the [developer dashboard](https://chrome.google.com/webstore/devconsole), by tab. Images are in this folder; regenerate them with `tools/store-assets.mjs` (brand assets are in `brand/`). Build the upload with `npm run package` (writes `dist/openparty-<version>.zip`).
 
 ## Package
 
@@ -37,7 +37,7 @@ You can run your own sync server with Node, Docker or Cloudflare's free tier.
 
 Everyone in a party needs their own access to the video (their own subscription for paid services).
 
-Screenshots show Big Buck Bunny (© Blender Foundation, bigbuckbunny.org, CC BY 3.0).
+Screenshots show Sintel (© Blender Foundation, sintel.org, CC BY 3.0).
 ```
 
 The short summary comes from `description` in `manifest.json` (127 of 132 characters).

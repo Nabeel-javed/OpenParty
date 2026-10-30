@@ -3,12 +3,13 @@
 // of the real extension in a staged party, plus the promo tiles. A few scripted
 // guests join the party over the protocol and chat.
 //
-//   node tools/store-assets.mjs --chromium /path/to/Chromium --video bbb.webm [--server url] [--headful]
+//   node tools/store-assets.mjs --chromium /path/to/Chromium --video sintel-reel.webm [--server url] [--headful]
 //
-// The screenshots use Big Buck Bunny (© Blender Foundation, CC BY 3.0). A
-// 2.5-minute section, starting at 0:55, from Wikimedia Commons:
-//   ffmpeg -ss 55 -i https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.720p.vp9.webm \
-//     -t 150 -c copy bbb.webm
+// Any Chromium-based browser that still loads unpacked extensions works (Brave does).
+// The screenshots use Sintel (© Blender Foundation, sintel.org, CC BY 3.0): a
+// 19-second reel of four shots, cut from Wikimedia Commons' 1080p transcode
+// (https://upload.wikimedia.org/wikipedia/commons/transcoded/f/f1/Sintel_movie_4K.webm/Sintel_movie_4K.webm.1080p.vp9.webm):
+// 4:52.6–4:59.0, 4:42.0–4:46.6, 3:35.2–3:39.6 and 4:46.75–4:50.65, joined in that order and scaled to 1280 px wide.
 
 import fs from "node:fs";
 import http from "node:http";
@@ -27,7 +28,7 @@ const args = Object.fromEntries(
   }, []),
 );
 if (!args.chromium || !args.video) {
-  console.error("usage: node tools/store-assets.mjs --chromium <path> --video <bbb.webm> [--server url] [--headful]");
+  console.error("usage: node tools/store-assets.mjs --chromium <path> --video <sintel-reel.webm> [--server url] [--headful]");
   process.exit(2);
 }
 const SERVER = String(args.server || "https://party.openparty.workers.dev").replace(/\/+$/, "");
@@ -38,12 +39,12 @@ const port = () => 20000 + Math.floor(Math.random() * 30000);
 
 // ---- pages ---------------------------------------------------------------
 
-const watchPage = `<!doctype html><html><head><meta charset="utf-8"><title>Big Buck Bunny</title></head>
-<body style="margin:0;background:#0b0b10;color:#ececf3;font:15px system-ui,-apple-system,sans-serif;overflow:hidden">
+const watchPage = `<!doctype html><html><head><meta charset="utf-8"><title>Sintel</title></head>
+<body style="margin:0;background:#0e0d0b;color:#f3eee3;font:15px system-ui,-apple-system,sans-serif;overflow:hidden">
 <video src="/clip.webm" style="display:block;width:${W}px;height:720px;background:#000"></video>
 <div style="height:80px;display:flex;flex-direction:column;justify-content:center;padding:0 28px">
-  <div style="font-weight:650;font-size:19px">Big Buck Bunny</div>
-  <div style="color:#8f8fa3;font-size:13px">© Blender Foundation · bigbuckbunny.org · CC BY 3.0</div>
+  <div style="font-weight:650;font-size:19px">Sintel</div>
+  <div style="color:#9c9487;font-size:13px">© Blender Foundation · sintel.org · CC BY 3.0</div>
 </div></body></html>`;
 
 function startPageServer(p, extra) {
@@ -52,6 +53,7 @@ function startPageServer(p, extra) {
     const html = { "content-type": "text/html; charset=utf-8" };
     if (req.url.startsWith("/watch")) return res.writeHead(200, html).end(watchPage);
     if (extra[req.url]) return res.writeHead(200, html).end(extra[req.url]());
+    if (req.url === "/brand/Fraunces-600.woff2") return res.writeHead(200, { "content-type": "font/woff2" }).end(fs.readFileSync(path.join(ROOT, "brand/fonts/Fraunces-600.woff2")));
     if (req.url === "/clip.webm") {
       const range = /bytes=(\d+)-(\d*)/.exec(req.headers.range || "");
       const start = range ? Number(range[1]) : 0;
@@ -75,28 +77,28 @@ background:url(data:image/png;base64,${page}) no-repeat">
 <img src="data:image/png;base64,${popup}" style="position:absolute;top:10px;right:18px;border-radius:12px;
 box-shadow:0 18px 50px #000a,0 0 0 1px #ffffff1a"></body></html>`;
 
-const brandCss = `margin:0;overflow:hidden;color:#fff;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
-background:radial-gradient(circle at 15% 0%,#8f74ff 0%,transparent 55%),linear-gradient(135deg,#6a4dff 0%,#3d2bc4 100%)`;
+// Promo tiles in the brand: warm near-black, the lockup, an ivory serif line and a gold rule.
+const brandCss = `margin:0;overflow:hidden;color:#f3eee3;background:#0e0d0b;font-family:system-ui,-apple-system,'Segoe UI',sans-serif`;
+const fontFace = `<style>@font-face{font-family:Fraunces;src:url(/brand/Fraunces-600.woff2);font-weight:600}
+.serif{font-family:Fraunces;font-weight:600;letter-spacing:-.01em}.rule{width:44px;height:3px;border-radius:2px;background:#e9a23b}</style>`;
 
-const smallTile = (icon) => `<!doctype html><html><body style="${brandCss};width:440px;height:280px;
-display:flex;flex-direction:column;justify-content:center;padding:0 36px;box-sizing:border-box">
-<div style="display:flex;align-items:center;gap:14px">
-  <img src="data:image/png;base64,${icon}" width="64" height="64" style="filter:drop-shadow(0 6px 14px #0004)">
-  <div style="font-size:40px;font-weight:750;letter-spacing:-.02em">OpenParty</div></div>
-<div style="font-size:22px;font-weight:600;margin-top:18px;line-height:1.25">Watch videos together,<br>on any site.</div>
-<div style="font-size:14px;opacity:.85;margin-top:12px">Free · Open source · No accounts · No tracking</div>
+const smallTile = (lockup) => `<!doctype html><html><head>${fontFace}</head><body style="${brandCss};width:440px;height:280px;
+display:flex;flex-direction:column;justify-content:center;padding:0 38px;box-sizing:border-box">
+<img src="data:image/png;base64,${lockup}" style="width:250px;margin-left:-14px">
+<div class="serif" style="font-size:25px;line-height:1.2;margin-top:16px">Watch videos together,<br>on almost any site.</div>
+<div class="rule" style="margin-top:16px"></div>
+<div style="font-size:13px;color:#9c9487;margin-top:12px">Free · Open source · No accounts · No tracking</div>
 </body></html>`;
 
-const marquee = (icon, shot) => `<!doctype html><html><body style="${brandCss};width:1400px;height:560px;
-display:flex;align-items:center;gap:56px;padding:0 0 0 80px;box-sizing:border-box">
-<div style="flex:0 0 440px">
-  <div style="display:flex;align-items:center;gap:16px">
-    <img src="data:image/png;base64,${icon}" width="72" height="72" style="filter:drop-shadow(0 6px 14px #0004)">
-    <div style="font-size:46px;font-weight:750;letter-spacing:-.02em">OpenParty</div></div>
-  <div style="font-size:34px;font-weight:650;margin-top:26px;line-height:1.2">Watch videos together,<br>on any site.</div>
-  <div style="font-size:18px;opacity:.88;margin-top:16px;line-height:1.5">Synced playback, chat and reactions with friends.<br>Free and open source. No accounts, no tracking.</div>
+const marquee = (lockup, shot) => `<!doctype html><html><head>${fontFace}</head><body style="${brandCss};width:1400px;height:560px;
+display:flex;align-items:center;gap:60px;padding:0 0 0 84px;box-sizing:border-box">
+<div style="flex:0 0 430px">
+  <img src="data:image/png;base64,${lockup}" style="width:340px;margin-left:-18px">
+  <div class="serif" style="font-size:38px;line-height:1.15;margin-top:22px">Watch videos together,<br>on almost any site.</div>
+  <div class="rule" style="margin-top:22px"></div>
+  <div style="font-size:17px;color:#9c9487;margin-top:16px;line-height:1.55">Synced playback, chat and reactions with friends.<br>Free and open source. No accounts, no tracking.</div>
 </div>
-<img src="data:image/png;base64,${shot}" style="width:760px;border-radius:14px;box-shadow:0 24px 60px #0007">
+<img src="data:image/png;base64,${shot}" style="width:760px;border-radius:12px;box-shadow:0 24px 60px #000a,0 0 0 1px #ffffff14">
 </body></html>`;
 
 // ---- run -----------------------------------------------------------------
@@ -148,7 +150,7 @@ async function main() {
 
     // Host: Maya starts a party on the video.
     const host = await open(pageUrl);
-    await cdp.eval(host, "(() => { const v = document.querySelector('video'); v.currentTime = 20; return v.play().then(() => true); })()");
+    await cdp.eval(host, "(() => { const v = document.querySelector('video'); v.currentTime = 5; return v.play().then(() => true); })()");
     const tabId = Math.max(...(await cdp.eval(sw, "chrome.tabs.query({}).then(ts => ts.map(t => t.id))")));
     const started = await cdp.eval(sw, `startParty(${tabId}, { controlLock: false })`);
     if (!started.ok) throw new Error(`could not start a party: ${started.error}`);
@@ -167,13 +169,13 @@ async function main() {
     await sleep(500);
     await priya.request("chat", { text: "yep, perfectly in sync 👌" });
     await sleep(500);
-    await hostSay("this bunny is my favourite");
+    await hostSay("this little dragon 🥹");
     await sleep(500);
-    await sam.request("chat", { text: "wait for the butterfly 😂" });
+    await sam.request("chat", { text: "no spoilers pls 😂" });
     await sleep(500);
     await leo.request("chat", { text: "popcorn ready 🍿" });
-    // Shoot at the same moment of the film every time (the meadow, with the butterfly).
-    while ((await cdp.eval(host, "document.querySelector('video').currentTime")) < 32.8) await sleep(50);
+    // Shoot at the same moment of the film every time (Sintel and the little dragon).
+    while ((await cdp.eval(host, "document.querySelector('video').currentTime")) < 12.6) await sleep(50);
 
     // 1: the party panel, with reactions in the air.
     await priya.request("react", { emoji: "😂" });
@@ -208,10 +210,10 @@ async function main() {
     save("screenshot-4-settings.png", await shoot(await open(`chrome-extension://${extId}/options/options.html`)));
 
     // Promo tiles, using the first screenshot.
-    const icon = fs.readFileSync(path.join(ROOT, "extension/icons/icon128.png")).toString("base64");
+    const lockup = fs.readFileSync(path.join(ROOT, "brand/logo-lockup-dark-bg.png")).toString("base64");
     const shot = fs.readFileSync(path.join(OUT, "screenshot-1-party.png")).toString("base64");
-    pages["/small"] = () => smallTile(icon);
-    pages["/marquee"] = () => marquee(icon, shot);
+    pages["/small"] = () => smallTile(lockup);
+    pages["/marquee"] = () => marquee(lockup, shot);
     save("promo-small-440x280.png", await shoot(await open(`http://127.0.0.1:${pagePort}/small`, { width: 440, height: 280 })));
     save("promo-marquee-1400x560.png", await shoot(await open(`http://127.0.0.1:${pagePort}/marquee`, { width: 1400, height: 560 })));
 
